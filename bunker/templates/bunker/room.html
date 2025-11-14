@@ -1,0 +1,91 @@
+{% extends 'bunker/base.html' %}
+{% load static %}
+
+{% block title %}Комната {{ room.name }} — Игра Бункер{% endblock %}
+
+{% block content %}
+<div class="container py-4 create_page">
+  <div class="row">
+    <div class="col-md-6 mb-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-header text-white">
+          <h5 class="mb-0">Комната {{ room.name }}</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Создатель:</strong> {{ room.host.username }}</p>
+          <p><strong>Катастрофа:</strong> {{ room.catastrophe.name }}</p>
+          <p><strong>Описание:</strong> {{ room.catastrophe.description }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-6 mb-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-header text-white d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Игроки</h5>
+          <span id="players-count" class="small">0 / {{ room.max_players }}</span>
+        </div>
+        <div class="card-body">
+          <ul id="players-list" class="list-group mb-3"></ul>
+          <div class="d-flex justify-content-between">
+            
+            {% if room.host == user %}
+              <button id="ready-btn" class="btn btn-primary w-50 me-2">Я готов</button>
+              <form id="start-game-form" action="{% url 'start_game' room.id %}" method="post" class="w-50">
+                {% csrf_token %}
+                <button type="submit" id="start-btn" class="btn btn-success w-100" disabled>Начать игру</button>
+              </form>
+            {% else %}
+              <div class="w-100 d-flex justify-content-center">
+                <button id="ready-btn" class="btn btn-primary w-50">Я готов</button>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const roomId = "{{ room.id }}";
+  const username = "{{ user.username }}";
+  const ws = new WebSocket(`ws://${window.location.host}/ws/room/${roomId}/`);
+
+  const playersList = document.getElementById('players-list');
+  const readyBtn = document.getElementById('ready-btn');
+  const startBtn = document.getElementById('start-btn');
+  const playersCount = document.getElementById('players-count');
+
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+
+    if (data.game_started) {
+      window.location.href = `/room/${roomId}/game/`;
+      return;
+    }
+
+    playersList.innerHTML = '';
+    data.players.forEach(p => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `${p.username} ${p.ready ? '<span class="text-success">✔</span>' : ''}`;
+      playersList.appendChild(li);
+      playersCount.textContent = `${playersList.children.length} / {{ room.max_players }}`;
+    });
+    startBtn.disabled = !data.all_ready;
+  };
+
+  readyBtn.addEventListener('click', () => {
+    ws.send(JSON.stringify({ action: 'toggle_ready' }));
+  });
+  
+  // if (startBtn) {
+  //   startBtn.addEventListener('click', () => {
+  //     ws.send(JSON.stringify({ action: 'start_game' }));
+  //   });
+  // }
+});
+</script>
+{% endblock %}

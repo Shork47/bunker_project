@@ -1,0 +1,77 @@
+{% extends 'bunker/base.html' %}
+{% load static %}
+
+{% block title %}Комната {{ room.name }} — Игра Бункер{% endblock %}
+
+{% block content %}
+<div class="container py-4 create_page">
+  <div class="row">
+    {% for player in players %}
+    <div class="col-md-6 mb-3">
+      <div class="card shadow-sm h-100">
+        <div class="card-header text-white">
+          <h5 class="mb-0">{{ player.user.username }}</h5>
+        </div>
+        <div class="card-body">
+          <p><strong>Здоровье:</strong> {{ player.health.name }}</p>
+          <p><strong>Биология:</strong> {{ player.biology.name }}</p>
+          <p><strong>Хобби:</strong> {{ player.hobby.name }}</p>
+          <p><strong>Фобия:</strong> {{ player.phobias.name }}</p>
+           <p><strong>Профессии:</strong>
+            {% for prof in player.profession.all %}
+              {{ prof.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </p>
+
+          <p><strong>Факты:</strong>
+            {% for fact in player.fact.all %}
+              {{ fact.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </p>
+
+          <p><strong>Багаж:</strong>
+            {% for bag in player.baggage.all %}
+              {{ bag.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </p>
+
+          <p><strong>Особые условия:</strong>
+            {% for sc in player.special_condition.all %}
+              {{ sc.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+          </p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- <script>
+  document.addEventListener('DOMContentLoaded', () => {
+  const roomId = "{{ room.id }}";
+  const username = "{{ user.username }}";
+  const ws = new WebSocket(`ws://${window.location.host}/ws/room/${roomId}/`);
+
+  const playersList = document.getElementById('players-list');
+  const readyBtn = document.getElementById('ready-btn');
+  const startBtn = document.getElementById('start-btn');
+  const playersCount = document.getElementById('players-count');
+
+  ws.onmessage = (e) => {
+    const data = JSON.parse(e.data);
+
+    playersList.innerHTML = '';
+    data.players.forEach(p => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      li.innerHTML = `${p.username} ${p.ready ? '<span class="text-success">✔</span>' : ''}`;
+      playersList.appendChild(li);
+      playersCount.textContent = `${playersList.children.length} / {{ room.max_players }}`;
+    });
+    startBtn.disabled = !data.all_ready;
+  };
+
+});
+</script> -->
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends 'bunker/base.html' %}
+{% block title %}Создать комнату{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+  <h3>Создание комнаты</h3>
+  <form action="{% url 'create_room' %}" method="post" class="row">
+    {% csrf_token %}
+    <div class="leftBlock col-md-6 mb-3">
+      <div class="card h-100">
+        <div class="card-header text-white">
+          <h5 class="mb-0">Настроки игры</h5>
+        </div>
+        <div class="card-body">
+          
+          <div class="mb-3">
+            <p class="form-label">Название комнаты</p>
+            <input type="text" name="roomName" class="form-control" placeholder="Введите имя комнаты" required>
+          </div>
+
+          <div class="mb-3">
+            <p class="form-label">Режим игры</p>
+            <select id="gameMode" name="gameMode" class="form-select" required>
+              <option value="basic">Базовый режим</option>
+              <option value="story">История выживания</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <p class="form-label">Цель игры</p>
+            <select id="gameGoal" name="gameGoal" class="form-select" required>
+              <option value="rescue">Спасение</option>
+              <option value="rebirth">Возрождение</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <p class="form-label">Количество игроков</p>
+            <input type="number" id="maxPlayers" name="maxPlayers" class="form-control" min="4" max="7" value="6" required>
+            <small id="playerRangeInfo" class="rangeInfo">От 4 до 7 игроков</small>
+          </div>
+
+          <button type="submit" class="btn btn-success w-100">Создать комнату</button>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="rightBlock col-md-6 mb-3">
+       <div class="card h-100">
+        <div class="card-header text-white">
+          <h5 class="mb-0">Описание</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <p id="modeDescription">
+              БАЗОВЫЙ РЕЖИМ – версия игры с краткой финальной частью. Задача игроков – сделать всё возможное, чтобы оказаться в бункере. Цель игрока попасть в бункер любой ценой. Вам не нужно заботиться о продолжении рода и выживите ли вы в нем.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+
+<script>
+  const modeSelect = document.getElementById('gameMode');
+  const goalSelect = document.getElementById('gameGoal');
+  const desc = document.getElementById('modeDescription');
+  const playerInput = document.getElementById('maxPlayers');
+  const rangeInfo = document.getElementById('playerRangeInfo');
+
+  function updateGameInfo() {
+    const mode = modeSelect.value;
+    const goal = goalSelect.value;
+    
+    if (mode === 'basic'){
+      if (goal === 'rescue') {
+        desc.textContent = 'БАЗОВЫЙ РЕЖИМ – версия игры с краткой финальной частью. Задача игроков – сделать всё возможное, чтобы оказаться в бункере. Цель игрока попасть в бункер любой ценой. Вам не нужно заботиться о продолжении рода и выживите ли вы в нем.'
+        playerInput.min = 4;
+        playerInput.max = 7;
+      }
+      else if (goal === 'rebirth') {
+        desc.textContent = 'БАЗОВЫЙ РЕЖИМ – версия игры с краткой финальной частью. Задача игроков – сделать всё возможное, чтобы оказаться в бункере. Цель игрока попасть в бункер любой ценой. Но есть одно но, обязательным условием победы является наличие разнополой пары. С учетом того, что все могут продолжить род.'
+        playerInput.min = 8;
+        playerInput.max = 16;
+      }
+    }else if (mode === 'story'){
+      if (goal === 'rescue') {
+        desc.textContent = 'ИСТОРИЯ ВЫЖИВАНИЯ – режим игры с развёрнутым финалом. Вы узнаете о том, кто из попавших в бункер смог выжить и выжил ли кто-то из изгнанных. Для повышения шансов на выживание будет особенно важно собрать команду людей с разносторонними полезными навыками. Ориентируйтесь не только на открытую карту Катастрофы, но будьте готовы и к самым неожиданным угрозам. адача игроков – сделать всё возможное, чтобы оказаться в бункере. Цель игрока попасть в бункер любой ценой. Вам не нужно заботиться о продолжении рода и выживите ли вы в нем.'
+        playerInput.min = 4;
+        playerInput.max = 7;
+      }
+      else if (goal === 'rebirth') {
+        desc.textContent = 'ИСТОРИЯ ВЫЖИВАНИЯ – режим игры с развёрнутым финалом. Вы узнаете о том, кто из попавших в бункер смог выжить и выжил ли кто-то из изгнанных. Для повышения шансов на выживание будет особенно важно собрать команду людей с разносторонними полезными навыками. Ориентируйтесь не только на открытую карту Катастрофы, но будьте готовы и к самым неожиданным угрозам. адача игроков – сделать всё возможное, чтобы оказаться в бункере. Но есть одно но, обязательным условием победы является наличие разнополой пары. С учетом того, что все могут продолжить род.'
+        playerInput.min = 8;
+        playerInput.max = 16;
+      }
+    }
+
+    if (playerInput.value < playerInput.min) playerInput.value = playerInput.min;
+    if (playerInput.value > playerInput.max) playerInput.value = playerInput.max;
+
+    rangeInfo.textContent = `От ${playerInput.min} до ${playerInput.max} игроков`;
+  }
+
+  modeSelect.addEventListener('change', updateGameInfo);
+  goalSelect.addEventListener('change', updateGameInfo);
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,22 @@
+DROP SCHEMA public CASCADE;
+CREATE SCHEMA public;
+
+
+
+python manage.py runserver
+daphne bunker_project.asgi:application
+
+
+python manage.py makemigrations
+python manage.py migrate
+
+
+
+Страница создания комнаты:
+	Добавить ввод имени +
+	Добавить возможность настройки игры ++
+
+Страница ожидания игроков:
+	Убрать кнопку начать игру у всех, кроме хоста +
+	Вывести название комнаты +
+	Убрать слева вывод макс игроков +

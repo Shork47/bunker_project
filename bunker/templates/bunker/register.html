@@ -1,0 +1,45 @@
+{% extends 'bunker/base.html' %}
+
+{% block title %}Регистрация — Игра Бункер{% endblock %}
+
+
+{% block content %}
+<h2 style="display: flex; align-items: center; justify-content: center; color: rgba(255, 255, 255, 0.75);">Окунись в мир настольной игры «Бункер»</h2>
+<form method="post" class="register-form">
+    {% csrf_token %}
+
+    <div class="form-field">
+        <label for="{{ form.username.id_for_label }}">Логин:</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+            <div class="error">{{ form.username.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.name.id_for_label }}">Имя:</label>
+        {{ form.name }}
+        {% if form.name.errors %}
+            <div class="error">{{ form.name.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.password1.id_for_label }}">Пароль:</label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+            <div class="error">{{ form.password1.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div class="form-field">
+        <label for="{{ form.password2.id_for_label }}">Подтверждение пароля:</label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+            <div class="error">{{ form.password2.errors }}</div>
+        {% endif %}
+    </div>
+
+    <button type="submit">Зарегистрироваться</button>
+</form>
+{% endblock %}
