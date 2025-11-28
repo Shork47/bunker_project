@@ -60,6 +60,17 @@ class Bunker(models.Model):
     class Meta:
         db_table = 'Bunker'
 
+class BunkerRoomBunker(models.Model):
+    room = models.ForeignKey("BunkerRoom", on_delete=models.CASCADE)
+    bunker = models.ForeignKey("Bunker", on_delete=models.CASCADE)
+    is_crossed = models.BooleanField(default=False)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "BunkerRoom_Bunker"
+        unique_together = ("room", "bunker")
+        ordering = ['added_at']
+
 
 class Catastrophe(models.Model):
     name = models.CharField(max_length=255)
@@ -88,7 +99,7 @@ class BunkerRoom(models.Model):
     max_players = models.IntegerField()
     created_at = models.DateTimeField(default=timezone.now)
     host = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="hosted_rooms")
-    bunker = models.ManyToManyField(Bunker, blank=True)
+    bunker = models.ManyToManyField(Bunker, through="BunkerRoomBunker", blank=True)
     catastrophe = models.ForeignKey(Catastrophe, on_delete=models.SET_NULL, null=True)
     threat = models.ManyToManyField(Threat, blank=True)
     year = models.IntegerField()
@@ -107,7 +118,9 @@ class BunkerRoom(models.Model):
 # ------------------- Player characteristics -------------------
 class Biology(models.Model):
     gender = models.CharField(max_length=50)
-    age = models.IntegerField()
+    age = models.IntegerField(null=True, blank=True)
+    orientation = models.CharField(max_length=50, null=True, blank=True, default=None)
+    childbearing = models.CharField(max_length=50, null=True, blank=True, default=None)
 
     class Meta:
         db_table = 'Biology'
@@ -164,17 +177,20 @@ class Baggage(models.Model):
         db_table = 'Baggage'
 
 
+
 class GameUser(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     room = models.ForeignKey(BunkerRoom, on_delete=models.CASCADE, related_name="players")
     health = models.ForeignKey(Health, on_delete=models.SET_NULL, null=True)
     biology = models.ForeignKey(Biology, on_delete=models.SET_NULL, null=True)
-    profession = models.ManyToManyField(Profession, blank=True)
+    profession = models.ForeignKey(Profession, on_delete=models.SET_NULL, null=True, blank=True)
     hobby = models.ForeignKey(Hobby, on_delete=models.SET_NULL, null=True)
     phobias = models.ForeignKey(Phobia, on_delete=models.SET_NULL, null=True)
-    fact = models.ManyToManyField(Fact, blank=True)
-    baggage = models.ManyToManyField(Baggage, blank=True)
-    special_condition = models.ManyToManyField(SpecialCondition, blank=True)
+    fact1 = models.ForeignKey(Fact, on_delete=models.SET_NULL, null=True, blank=True, related_name='fact1_users')
+    fact2 = models.ForeignKey(Fact, on_delete=models.SET_NULL, null=True, blank=True, related_name='fact2_users')
+    baggage = models.ForeignKey(Baggage, on_delete=models.SET_NULL, null=True, blank=True)
+    special_condition = models.ForeignKey(SpecialCondition, on_delete=models.SET_NULL, null=True, blank=True)
+    opened_fields = models.JSONField(null=True, blank=True, default=list)
     is_host = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -184,6 +200,28 @@ class GameUser(models.Model):
     
     class Meta:
         db_table = 'Players'
+
+# class GameUser(models.Model):
+#     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+#     room = models.ForeignKey(BunkerRoom, on_delete=models.CASCADE, related_name="players")
+#     health = models.ForeignKey(Health, on_delete=models.SET_NULL, null=True)
+#     biology = models.ForeignKey(Biology, on_delete=models.SET_NULL, null=True)
+#     profession = models.ManyToManyField(Profession, blank=True)
+#     hobby = models.ForeignKey(Hobby, on_delete=models.SET_NULL, null=True)
+#     phobias = models.ForeignKey(Phobia, on_delete=models.SET_NULL, null=True)
+#     fact = models.ManyToManyField(Fact, blank=True)
+#     baggage = models.ManyToManyField(Baggage, blank=True)
+#     special_condition = models.ManyToManyField(SpecialCondition, blank=True)
+#     opened_fields = models.JSONField(null=True, blank=True, default=list)
+#     is_host = models.BooleanField(default=False)
+#     created_at = models.DateTimeField(default=timezone.now)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+#     def __str__(self):
+#         return f"{self.user.username} in {self.room.name}"
+    
+#     class Meta:
+#         db_table = 'Players'
 
 
 # # ------------------- Signal -------------------

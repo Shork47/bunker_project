@@ -1,45 +1,210 @@
 {% extends 'bunker/base.html' %}
 {% load static %}
+{% load my_filters %}
 
 {% block title %}Комната {{ room.name }} — Игра Бункер{% endblock %}
 
 {% block content %}
-<div class="container py-4 create_page">
-  <div class="row">
+<div class="container-fluid mt-3 mb-0">
+  <div class="row g-3">
+
+    <!-- Левая колонка -->
+    <div class="col-12 col-md-6">
+      <div class="p-3 pb-0 text-white text-center">
+        <h5>
+          🌋 
+          <span 
+            data-bs-toggle="tooltip" 
+            data-bs-placement="top" 
+            title="{{ room.catastrophe.description }}"
+            style="cursor: help;"
+          >
+            {{ room.catastrophe.name }}
+          </span> - {{ room.year }} лет
+        </h5>
+      </div>
+    </div>
+
+    <!-- Правая колонка -->
+    <div class="col-12 col-md-6">
+      <div class="p-3 pb-0 text-white">
+        <h5 class="mb-2 text-center">🏚 Карты бункера</h5>
+        <p id="bunkerCardsContainer" class="text-center" style="font-size: 12px;">
+          {% for room_card in room.bunkerroombunker_set.all %}
+            <span 
+              class="bunker-card{% if room_card.is_crossed %} crossed{% endif %}"
+              data-card-id="{{ room_card.id }}"
+              data-bs-toggle="tooltip" 
+              data-bs-placement="top" 
+              title="{{ room_card.bunker.description }}"
+              style="cursor: help;">
+              {{ room_card.bunker.name }}
+            </span>{% if not forloop.last %}, {% endif %}
+          {% empty %}
+            Нет карт
+          {% endfor %}
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="container-fluid px-3 py-3 pt-0 create_page" style="margin-top:0;">
+  <div class="row" style="margin-top:0;">
     {% for player in players %}
-    <div class="col-md-6 mb-3">
+    <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
       <div class="card shadow-sm h-100">
         <div class="card-header text-white">
           <h5 class="mb-0">{{ player.user.username }}</h5>
         </div>
         <div class="card-body">
-          <p><strong>Здоровье:</strong> {{ player.health.name }}</p>
-          <p><strong>Биология:</strong> {{ player.biology.name }}</p>
-          <p><strong>Хобби:</strong> {{ player.hobby.name }}</p>
-          <p><strong>Фобия:</strong> {{ player.phobias.name }}</p>
-           <p><strong>Профессии:</strong>
-            {% for prof in player.profession.all %}
-              {{ prof.name }}{% if not forloop.last %}, {% endif %}
-            {% endfor %}
+          <p>💗<strong> Здоровье:</strong> 
+            <span 
+              data-user="{{ player.user.id }}"
+              data-field="health"
+              data-realvalue="{{ player.health.name }}"
+            >
+            {% if "health" in player.opened_fields %}
+              {{ player.health.name }}
+            {% endif %} </span>
+          </p>
+          <p>👫<strong> Биология:</strong>
+            <span 
+            data-user="{{ player.user.id }}"
+            data-field="biology"
+            data-realvalue="
+            {{ player.biology.gender }} 
+            {% if player.biology.age %}
+              {{ player.biology.age }} {{ player.biology.age|age_filter }}
+            {% endif %}
+            {% if player.biology.orientation or player.biology.childbearing %}
+              (
+              {% if player.biology.orientation %}{{ player.biology.orientation }}{% endif %}
+              {% if player.biology.orientation and player.biology.childbearing %}, {% endif %}
+              {% if player.biology.childbearing %}{{ player.biology.childbearing }}{% endif %}
+              )
+            {% endif %}"
+            >
+            {% if 'biology' in player.opened_fields %}
+              {{ player.biology.gender }} 
+              {% if player.biology.age %}
+                {{ player.biology.age }} {{ player.biology.age|age_filter }}
+              {% endif %}
+              {% if player.biology.orientation or player.biology.childbearing %}
+                ({% if player.biology.orientation %}{{ player.biology.orientation }}{% endif %}{% if player.biology.orientation and player.biology.childbearing %}, {% endif %}{% if player.biology.childbearing %}{{ player.biology.childbearing }}{% endif %})
+              {% endif %}
+            {% endif %} </span>
+          </p>
+          <p>🎨<strong> Хобби:</strong>
+            <span 
+            data-user="{{ player.user.id }}"
+            data-field="hobby"
+            data-realvalue="{{ player.hobby.name }}"
+            >
+            {% if "hobby" in player.opened_fields %}
+              {{ player.hobby.name }}
+            {% endif %} </span>
+          </p>
+          <p>😨<strong> Фобия:</strong>
+            <span 
+            data-user="{{ player.user.id }}"
+            data-field="phobias"
+            data-realvalue="{{ player.phobias.name }}"
+           >
+            {% if "phobias" in player.opened_fields %}
+              {{ player.phobias.name }}
+            {% endif %} </span>
+          </p>
+          <p>👩‍⚕️<strong> Профессия:</strong>
+            <span 
+              data-user="{{ player.user.id }}"
+              data-field="profession"
+              data-realvalue="{{ player.profession.name }}"
+            >
+            {% if "profession" in player.opened_fields %}
+              {{ player.profession.name }}
+            {% endif %} </span>
+          </p>
+          
+          <p>💡<strong> Факт 1:</strong>
+            <span 
+              data-user="{{ player.user.id }}"
+              data-field="fact1"
+              data-realvalue="{{ player.fact1.name }}"
+            >
+            {% if "fact1" in player.opened_fields %}
+              {{ player.fact1.name }}
+            {% endif %}
+            </span>
+          </p>
+          
+          <p>💡<strong> Факт 2:</strong>
+            <span 
+              data-user="{{ player.user.id }}"
+              data-field="fact2"
+              data-realvalue="{{ player.fact2.name }}"
+            >
+            {% if "fact2" in player.opened_fields %}
+              {{ player.fact2.name }}
+            {% endif %}
+            </span>
+          </p>
+          
+          <p>🧳<strong> Багаж:</strong>
+            <span 
+              data-user="{{ player.user.id }}"
+              data-field="baggage"
+              data-realvalue="{{ player.baggage.name }}"
+            >
+            {% if "baggage" in player.opened_fields %}
+              {{ player.baggage.name }}
+            {% endif %} </span>
+          </p>
+          <!-- <p>👩‍⚕️<strong> Профессии:</strong>
+            <span 
+            data-user="{{ player.user.id }}"
+            data-field="profession"
+            data-realvalue="{% for prof in player.profession.all %}{{ prof.name }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+            >
+            {% if "profession" in player.opened_fields %}
+              {% for prof in player.profession.all %}
+                {{ prof.name }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            {% endif %} </span>
           </p>
 
-          <p><strong>Факты:</strong>
-            {% for fact in player.fact.all %}
-              {{ fact.name }}{% if not forloop.last %}, {% endif %}
-            {% endfor %}
+          <p>💡<strong> Факты:</strong>
+            <span 
+            data-user="{{ player.user.id }}"
+            data-field="fact"
+            data-realvalue="{% for fact in player.fact.all %}{{ fact.name }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+            >
+            {% if "fact" in player.opened_fields %}
+              {% for fact in player.fact.all %}
+                {{ fact.name }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            {% endif %} </span>
           </p>
 
-          <p><strong>Багаж:</strong>
-            {% for bag in player.baggage.all %}
-              {{ bag.name }}{% if not forloop.last %}, {% endif %}
-            {% endfor %}
-          </p>
+          <p>🧳<strong> Багаж:</strong>
+            <span 
+            data-user="{{ player.user.id }}"
+            data-field="baggage"
+            data-realvalue="{% for bag in player.baggage.all %}{{ bag.name }}{% if not forloop.last %}, {% endif %}{% endfor %}"
+            >
+            {% if "baggage" in player.opened_fields %}
+              {% for bag in player.baggage.all %}
+                {{ bag.name }}{% if not forloop.last %}, {% endif %}
+              {% endfor %}
+            {% endif %} </span>
+          </p> -->
 
-          <p><strong>Особые условия:</strong>
+          <!-- <p>⚠️<strong> Особые условия:</strong>
             {% for sc in player.special_condition.all %}
               {{ sc.name }}{% if not forloop.last %}, {% endif %}
             {% endfor %}
-          </p>
+          </p> -->
         </div>
       </div>
     </div>
@@ -47,31 +212,596 @@
   </div>
 </div>
 
-<!-- <script>
-  document.addEventListener('DOMContentLoaded', () => {
+<!-- Кнопка открытия -->
+<button id="openSidebar" class="btn btn-light position-fixed" style="top: 90px; left: 15px; z-index: 1100;">
+  Мои карточки
+</button>
+
+<!-- Левый сайдбар -->
+<div id="sidebar" class="sidebar">
+  <div class="sidebar-header">
+    <h4>Ваши карточки</h4>
+    <button id="closeSidebar" class="btn-close"></button>
+  </div>
+
+  <div class="sidebar-body">
+    <!-- Здесь выводи данные игрока -->
+    <p>💗<strong> Здоровье:</strong>
+    <span 
+      id="sidebar-health"
+      data-sidebar="true"
+      data-user="{{ me.user.id }}"
+      data-field="health"
+    >
+    {{ me.health.name }}
+    {% if "health" not in me.opened_fields %}
+      <button class="btn btn-sm btn-primary open-field" data-field="health">Открыть</button>
+    {% endif %}
+    </p>
+    <p>👫<strong> Биология:</strong> 
+      <span 
+        id="sidebar-biology"
+        data-sidebar="true"
+        data-user="{{ me.user.id }}"
+        data-field="biology"
+      >
+      {{ me.biology.gender }} 
+      {% if me.biology.age %}
+        {{ me.biology.age }} {{ me.biology.age|age_filter }}
+      {% endif %}
+      {% if me.biology.orientation or me.biology.childbearing %}
+        ({% if me.biology.orientation %}{{ me.biology.orientation }}{% endif %}{% if me.biology.orientation and me.biology.childbearing %}, {% endif %}{% if me.biology.childbearing %}{{ me.biology.childbearing }}{% endif %})
+      {% endif %}
+      {% if "biology" not in me.opened_fields %} 
+        <button class="btn btn-sm btn-primary open-field" data-field="biology">Открыть</button>
+      {% endif %}
+    </p>
+    <p>🎨<strong> Хобби:</strong> 
+      <span 
+        id="sidebar-hobby"
+        data-sidebar="true"
+        data-user="{{ me.user.id }}"
+        data-field="hobby"
+      >
+      {{ me.hobby.name }}
+      {% if "hobby" not in me.opened_fields %}
+        <button class="btn btn-sm btn-primary open-field" data-field="hobby">Открыть</button>
+      {% endif %}
+    </p>
+    <p>😨<strong> Фобия:</strong> 
+      <span 
+        id="sidebar-phobias"
+        data-sidebar="true"
+        data-user="{{ me.user.id }}"
+        data-field="phobias"
+      >
+      {{ me.phobias.name }}
+      {% if "phobias" not in me.opened_fields %}
+        <button class="btn btn-sm btn-primary open-field" data-field="phobias">Открыть</button>
+      {% endif %}
+    </p>
+
+    <p>👩‍⚕️<strong> Профессия:</strong>
+      <span id="sidebar-profession" data-sidebar="true" data-user="{{ me.user.id }}" data-field="profession">
+        {{ me.profession.name }}
+        {% if "profession" not in me.opened_fields %}
+          <button class="btn btn-sm btn-primary open-field" data-field="profession">Открыть</button>
+        {% endif %}
+      </span>
+    </p>
+    
+    <p>💡<strong> Факт 1:</strong>
+      <span id="sidebar-fact1" data-sidebar="true" data-user="{{ me.user.id }}" data-field="fact1">
+        {{ me.fact1.name }}
+        {% if "fact1" not in me.opened_fields %}
+          <button class="btn btn-sm btn-primary open-field" data-field="fact1">Открыть</button>
+        {% endif %}
+      </span>
+    </p>
+    
+    <p>💡<strong> Факт 2:</strong>
+      <span id="sidebar-fact2" data-sidebar="true" data-user="{{ me.user.id }}" data-field="fact2">
+        {{ me.fact2.name }}
+        {% if "fact2" not in me.opened_fields %}
+          <button class="btn btn-sm btn-primary open-field" data-field="fact2">Открыть</button>
+        {% endif %}
+      </span>
+    </p>
+    
+    <p>🧳<strong> Багаж:</strong>
+      <span id="sidebar-baggage" data-sidebar="true" data-user="{{ me.user.id }}" data-field="baggage">
+        {{ me.baggage.name }}
+        {% if "baggage" not in me.opened_fields %}
+          <button class="btn btn-sm btn-primary open-field" data-field="baggage">Открыть</button>
+        {% endif %}
+      </span>
+    </p>
+    
+    <p>⚠️<strong> Особые условия:</strong>
+      <span id="sidebar-special_condition" data-sidebar="true" data-user="{{ me.user.id }}" data-field="special_condition">
+        {{ me.special_condition.name }}. Описание: {{ me.special_condition.description }}
+      </span>
+    </p>
+    
+
+    <!-- <p>👩‍⚕️<strong>Профессии:</strong>
+      <span 
+        id="sidebar-profession"
+        data-sidebar="true"
+        data-user="{{ me.user.id }}"
+        data-field="profession"
+      >
+      {% for prof in me.profession.all %}
+        {{ prof.name }}{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+      {% if "profession" not in me.opened_fields %}
+        <button class="btn btn-sm btn-primary open-field" data-field="profession">Открыть</button>
+      {% endif %}
+    </p>
+
+    <p>💡<strong>Факты:</strong>
+      <span 
+        id="sidebar-fact"
+        data-sidebar="true"
+        data-user="{{ me.user.id }}"
+        data-field="fact"
+      >
+      {% for fact in me.fact.all %}
+        {{ fact.name }}{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+      {% if "fact" not in me.opened_fields %}
+        <button class="btn btn-sm btn-primary open-field" data-field="fact">Открыть</button>
+      {% endif %}
+    </p>
+
+    <p>🧳<strong>Багаж:</strong>
+      <span 
+        id="sidebar-baggage"
+        data-sidebar="true"
+        data-user="{{ me.user.id }}"
+        data-field="baggage"
+      >
+      {% for bag in me.baggage.all %}
+        {{ bag.name }}{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+      {% if "baggage" not in me.opened_fields %}
+        <button class="btn btn-sm btn-primary open-field" data-field="baggage">Открыть</button>
+      {% endif %}
+    </p>
+
+    <p>⚠️<strong>Особые условия:</strong>
+      {% for sc in me.special_condition.all %}
+        {{ sc.name }}. Описание: {{ sc.description }}{% if not forloop.last %}, {% endif %}
+      {% endfor %}
+       {% if "special_condition" not in me.opened_fields %}
+        <button class="btn btn-sm btn-primary open-field" data-field="special_condition">Открыть</button>
+      {% endif %} 
+    </p> -->
+  </div>
+  {% if me.is_host %}
+  <div class="modal" id="swapModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" >
+      <div class="modal-content">
+  
+        <div class="modal-header bg-dark">
+          <h5 class="modal-title">Обмен характеристикой</h5>
+          <button type="button" class="btn-close" onclick="hideSwapModal()"></button>
+        </div>
+  
+        <div class="modal-body bg-dark">
+  
+          <label>Выберите характеристику:</label>
+          <select id="swapField" class="form-select">
+            <option value="health">Здоровье</option>
+            <option value="biology">Биология</option>
+            <option value="profession">Профессия</option>
+            <option value="hobby">Хобби</option>
+            <option value="phobias">Фобия</option>
+            <option value="fact">Факт</option>
+            <option value="baggage">Багаж</option>
+          </select>
+  
+          <label class="mt-3">Игрок 1:</label>
+          <select id="swapUser1" class="form-select">
+            {% for p in players %}
+              <option value="{{ p.user.id }}">{{ p.user.username }}</option>
+            {% endfor %}
+          </select>
+  
+          <label class="mt-3">Игрок 2:</label>
+          <select id="swapUser2" class="form-select">
+            {% for p in players %}
+              <option value="{{ p.user.id }}">{{ p.user.username }}</option>
+            {% endfor %}
+          </select>
+  
+        </div>
+  
+        <div class="modal-footer bg-dark">
+          <button class="btn btn-secondary" onclick="hideSwapModal()">Отмена</button>
+          <button class="btn btn-primary" onclick="sendSwap()">Поменять</button>
+        </div>
+  
+      </div>
+    </div>
+  </div>
+  
+  <button class="btn btn-warning mt-3 mb-2" onclick="showSwapModal()">Обмен характеристикой</button>
+  
+  <select id="shuffleSelect" class="form-select mt-2" style="width:200px;">
+    <option value="health">Здоровье</option>
+    <option value="biology">Биология</option>
+    <option value="profession">Профессия</option>
+    <option value="hobby">Хобби</option>
+    <option value="phobias">Фобия</option>
+    <option value="fact">Факт</option>
+    <option value="baggage">Багаж</option>
+  </select>
+  <button class="btn btn-warning mt-1" onclick="shuffleField()">Перемешать характеристику</button>
+
+<!-- Модальное окно удаления характеристики -->
+<div class="modal" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-header bg-dark">
+        <h5 class="modal-title">Удалить характеристику</h5>
+        <button type="button" class="btn-close" onclick="hideDeleteModal()"></button>
+      </div>
+
+      <div class="modal-body bg-dark">
+
+        <label>Выберите характеристику:</label>
+        <select id="deleteField" class="form-select">
+          <option value="health">Здоровье</option>
+          <option value="biology">Биология</option>
+          <option value="profession">Профессия</option>
+          <option value="hobby">Хобби</option>
+          <option value="phobias">Фобия</option>
+          <option value="fact1">Факт 1</option>
+          <option value="fact2">Факт 2</option>
+          <option value="baggage">Багаж</option>
+        </select>
+
+        <label class="mt-3">Игрок:</label>
+        <select id="deleteUser" class="form-select">
+          {% for p in players %}
+            <option value="{{ p.user.id }}">{{ p.user.username }}</option>
+          {% endfor %}
+        </select>
+
+      </div>
+
+      <div class="modal-footer bg-dark">
+        <button class="btn btn-secondary" onclick="hideDeleteModal()">Отмена</button>
+        <button class="btn btn-danger" onclick="sendNew()">Изменить</button>
+        <button class="btn btn-danger" onclick="sendDelete()">Удалить</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<button class="btn btn-warning mt-3 mb-2" onclick="showDeleteModal()">Изменение характеристики игрока</button>
+
+
+<button class="btn btn-warning mt-1" onclick="addRandomCardBtn()">Добавить карту бункера</button>
+
+  {% endif %}
+</div>
+
+<div id="confirmModal" class="confirm-modal">
+  <div class="confirm-content">
+    <p>Вы уверены, что хотите открыть эту характеристику?</p>
+    <button id="confirmYes" class="btn btn-success btn-sm">Да</button>
+    <button id="confirmNo" class="btn btn-secondary btn-sm">Отмена</button>
+  </div>
+</div>
+
+
+<script>
+  const sidebar = document.getElementById('sidebar');
+  const openBtn = document.getElementById('openSidebar');
+  const closeBtn = document.getElementById('closeSidebar');
   const roomId = "{{ room.id }}";
-  const username = "{{ user.username }}";
-  const ws = new WebSocket(`ws://${window.location.host}/ws/room/${roomId}/`);
+  const isHost = "{{ me.is_host|yesno:'true,false' }}";
+  const ws = new WebSocket(
+      "ws://" + window.location.host + "/ws/room/" + roomId + "/"
+  );
+  let fieldToOpen = null;
 
-  const playersList = document.getElementById('players-list');
-  const readyBtn = document.getElementById('ready-btn');
-  const startBtn = document.getElementById('start-btn');
-  const playersCount = document.getElementById('players-count');
-
-  ws.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-
-    playersList.innerHTML = '';
-    data.players.forEach(p => {
-      const li = document.createElement('li');
-      li.className = 'list-group-item d-flex justify-content-between align-items-center';
-      li.innerHTML = `${p.username} ${p.ready ? '<span class="text-success">✔</span>' : ''}`;
-      playersList.appendChild(li);
-      playersCount.textContent = `${playersList.children.length} / {{ room.max_players }}`;
-    });
-    startBtn.disabled = !data.all_ready;
+  openBtn.onclick = () => {
+    sidebar.classList.add('open');
   };
 
-});
-</script> -->
+  closeBtn.onclick = () => {
+    sidebar.classList.remove('open');
+  };
+
+  document.querySelectorAll(".open-field").forEach(btn => {
+      btn.onclick = () => {
+          fieldToOpen = btn;
+          document.getElementById("confirmModal").style.display = "block";
+      };
+  });
+
+  document.getElementById("confirmYes").onclick = () => {
+      const field = fieldToOpen.dataset.field;
+      ws.send(JSON.stringify({
+          "type": "open_field",
+          "field": field
+      }));
+      document.getElementById("confirmModal").style.display = "none";
+
+      fieldToOpen.remove();
+      fieldToOpen = null;
+  };
+
+  document.getElementById("confirmNo").onclick = () => {
+      document.getElementById("confirmModal").style.display = "none";
+      fieldToOpen = null;
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+
+    // Клик по карте бункера (только хост!)
+    if (isHost) {
+        document.querySelectorAll('.bunker-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const cardId = card.dataset.cardId;
+                ws.send(JSON.stringify({
+                    'type': 'toggle_bunker_card',
+                    'card_id': cardId
+                }));
+            });
+        });
+    }
+    });
+  
+  ws.onmessage = function(e) {
+    const data = JSON.parse(e.data);
+
+    if (data.type === "field_opened") {
+        const userId = data.user_id;
+        const field = data.field;
+
+        // обновляем карточки
+        const selector = `[data-user='${userId}'][data-field='${field}']`;
+        const el = document.querySelector(selector);
+
+        if (el) {
+            el.innerHTML = el.dataset.realvalue; 
+        }
+    }
+    if (data.type === "field_swapped") {
+    const user1 = data.user1_id;
+    const user2 = data.user2_id;
+    const field = data.field;
+
+    console.log("Swap received:", user1, user2, field);
+
+    // Основные карточки
+    const cards1 = document.querySelectorAll(`.card [data-user='${user1}'][data-field='${field}']`);
+    const cards2 = document.querySelectorAll(`.card [data-user='${user2}'][data-field='${field}']`);
+
+    const vals1 = Array.from(cards1).map(el => el.dataset.realvalue);
+    const vals2 = Array.from(cards2).map(el => el.dataset.realvalue);
+
+    cards1.forEach((el, i) => {
+        const val2 = vals2[i] || "";
+        console.log(`Card swap: user${user1} ${el.tagName} val=${el.dataset.realvalue} -> ${val2}`);
+        el.innerHTML = val2;
+        el.dataset.realvalue = val2;
+    });
+
+    cards2.forEach((el, i) => {
+        const val1 = vals1[i] || "";
+        console.log(`Card swap: user${user2} ${el.tagName} val=${el.dataset.realvalue} -> ${val1}`);
+        el.innerHTML = val1;
+        el.dataset.realvalue = val1;
+    });
+
+    // Сайдбары (если есть)
+    const sidebar1 = document.querySelector(`#sidebar [data-user='${user1}'][data-field='${field}']`);
+    const sidebar2 = document.querySelector(`#sidebar [data-user='${user2}'][data-field='${field}']`);
+
+    if (sidebar1) {
+        sidebar1.innerHTML = vals2[0] || ""; // берем из карточки
+        sidebar1.dataset.realvalue = vals2[0] || "";
+        console.log(`Sidebar updated for user1: ${sidebar1.dataset.realvalue}`);
+    }
+
+    if (sidebar2) {
+        sidebar2.innerHTML = vals1[0] || "";
+        sidebar2.dataset.realvalue = vals1[0] || "";
+        console.log(`Sidebar updated for user2: ${sidebar2.dataset.realvalue}`);
+    }
+}
+
+    if (data.type === "field_shuffled") {
+      const userId = data.user_id;
+      const field = data.field;
+      const el = document.querySelector(`[data-user='${userId}'][data-field='${field}']`);
+
+      if (el) {
+          if (data.opened) {
+              el.innerHTML = data.value;  // отображаем значение
+          } else {
+              el.innerHTML = "";          // оставляем закрытым
+          }
+          el.dataset.realvalue = data.value;  // обновляем dataset для последующих обменов
+      }
+    }
+    if (data.type === "card_added") {
+      const container = document.getElementById("bunkerCardsContainer");
+      console.log(container)
+      const span = document.createElement("span");
+      span.textContent = data.card_name;
+      span.title = data.card_description;
+      span.setAttribute("data-bs-toggle", "tooltip");
+      span.setAttribute("data-bs-placement", "top");
+      span.style.cursor = "help";
+      span.dataset.cardId = data.card_id;
+
+      // Если уже есть карты, добавляем запятую
+      if (container.querySelector("span")) {
+          container.appendChild(document.createTextNode(", "));
+          console.log(container)
+      }
+
+      container.appendChild(span);
+
+      // Инициализируем тултип для нового элемента
+      new bootstrap.Tooltip(span);
+
+      if (isHost) {
+        span.addEventListener('click', () => {
+        const cardId = parseInt(span.dataset.cardId);
+        if (isNaN(cardId)) {
+          console.error("cardId is not a number:", span.dataset.cardId);
+          return;
+        }
+            ws.send(JSON.stringify({
+                'type': 'toggle_bunker_card',
+                'card_id': cardId  // обязательно передавай id карты с сервера
+            }));
+        });
+    }
+    }
+    
+    if (data.type === "bunker_card_toggled") {
+        const span = document.querySelector(`[data-card-id='${data.card_id}']`);
+        if (span) {
+            if (data.is_crossed) {
+                span.style.textDecoration = 'line-through';
+            } else {
+                span.style.textDecoration = 'none';
+            }
+        }
+    }
+    if (data.type === "update_character") {
+    const { user_id, field, value, opened } = data;
+    console.log("WS DATA:", data);
+    const isDeleted = (value === null || value === "");
+
+    // Основная карточка
+    document.querySelectorAll(`[data-user="${user_id}"][data-field="${field}"]`)
+        .forEach(el => {
+            if (isDeleted) {
+                el.dataset.realvalue = value || "";
+                el.innerText = "";
+            } else {
+                el.innerText = opened ? value : "";
+                console.log(opened)
+            }
+        });
+
+      // Сайдбар
+      const sidebar = document.getElementById(`sidebar-${field}`);
+      if (sidebar && sidebar.dataset.user == user_id) {
+
+          sidebar.innerHTML = "";
+          sidebar.dataset.realvalue = value || "";
+
+          if (isDeleted) {
+              // Характеристика удалена — пусто, без кнопки
+              sidebar.innerText = "";
+              return;
+          }
+
+          if (opened) {
+              // Открыто — просто показываем текст
+              sidebar.innerText = value;
+          } else {
+              // Закрыто — текст + кнопка "Открыть"
+              sidebar.appendChild(document.createTextNode(value));
+
+              const btn = document.createElement("button");
+              btn.classList.add("btn", "btn-sm", "btn-primary", "open-field");
+              btn.dataset.field = field;
+              btn.innerText = "Открыть";
+
+              btn.onclick = () => {
+                  fieldToOpen = btn;
+                  document.getElementById("confirmModal").style.display = "block";
+              };
+
+              sidebar.appendChild(btn);
+          }
+      }
+    }
+  };
+
+  function showSwapModal() {
+    document.getElementById("swapModal").style.display = "block";
+  }
+
+  function hideSwapModal() {
+      document.getElementById("swapModal").style.display = "none";
+  }
+
+  function showDeleteModal() {
+    document.getElementById("deleteModal").style.display = "block";
+  }
+
+  function hideDeleteModal() {
+      document.getElementById("deleteModal").style.display = "none";
+  }
+
+  function addRandomCardBtn(){
+    ws.send(JSON.stringify({
+        "type": "add_random_card"
+    }));
+  }
+  
+  function sendSwap() {
+      const field = document.getElementById("swapField").value;
+      const user1 = document.getElementById("swapUser1").value;
+      const user2 = document.getElementById("swapUser2").value;
+
+      ws.send(JSON.stringify({
+          "type": "swap_one",
+          "user1_id": user1,
+          "user2_id": user2,
+          "field": field
+      }));
+
+      hideSwapModal();
+  }
+
+  function sendDelete() {
+      const field = document.getElementById("deleteField").value;
+      const user = document.getElementById("deleteUser").value;
+
+      ws.send(JSON.stringify({
+          type: "delete_character",
+          field: field,
+          user: user
+      }));
+
+      hideDeleteModal();
+  }
+
+  function sendNew() {
+      const field = document.getElementById("deleteField").value;
+      const user = document.getElementById("deleteUser").value;
+
+      ws.send(JSON.stringify({
+          type: "new_character",
+          field: field,
+          user: user
+      }));
+
+      hideDeleteModal();
+  }
+
+  function shuffleField() {
+    const field = document.getElementById("shuffleSelect").value;
+    ws.send(JSON.stringify({
+        "type": "shuffle_field",
+        "field": field
+    }));
+  }
+</script>
+
 {% endblock %}

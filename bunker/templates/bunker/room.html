@@ -13,6 +13,7 @@
         </div>
         <div class="card-body">
           <p><strong>Создатель:</strong> {{ room.host.username }}</p>
+          <p><strong>Лет в бункере:</strong> {{ room.year }}</p>
           <p><strong>Катастрофа:</strong> {{ room.catastrophe.name }}</p>
           <p><strong>Описание:</strong> {{ room.catastrophe.description }}</p>
         </div>
@@ -51,8 +52,11 @@
 document.addEventListener('DOMContentLoaded', () => {
   const roomId = "{{ room.id }}";
   const username = "{{ user.username }}";
-  const ws = new WebSocket(`ws://${window.location.host}/ws/room/${roomId}/`);
-
+  //const ws = new WebSocket(`ws://${window.location.host}/ws/room/${roomId}/`);
+  const ws = new WebSocket(
+      "ws://" + window.location.host + "/ws/room/" + roomId + "/"
+  );
+  
   const playersList = document.getElementById('players-list');
   const readyBtn = document.getElementById('ready-btn');
   const startBtn = document.getElementById('start-btn');
