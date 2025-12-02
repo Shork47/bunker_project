@@ -45,12 +45,11 @@ body{
     height: 100%;
     margin:0;
     font-family: Roboto, sans-serif;
-    /* background: #ffe135b4; */
-    background-image: url("../images/back.webp"); /* путь к картинке */
-    background-size: cover;       /* растянуть на весь экран */
-    background-repeat: no-repeat; /* не повторять */
-    background-position: center;  /* выровнять по центру */
-    background-attachment: fixed; /* чтобы не двигалась при скролле */
+    background-image: url("../images/back.webp");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;
 }
 
 .login-form input {
@@ -95,17 +94,17 @@ body{
 /*------------------СТРАНИЦА РЕГИСТРАЦИИ------------------*/
 .register-form {
     display: flex;
-    flex-direction: column; /* чтобы поля шли вертикально */
-    gap: 10px; /* расстояние между полями */
-    max-width: 400px; /* ограничим ширину формы */
-    margin: 0 auto; /* центрируем */
+    flex-direction: column;
+    gap: 10px;
+    max-width: 400px;
+    margin: 0 auto;
     color: rgba(255, 255, 255, 0.75);
 }
 
 
 .form-field {
     display: flex;
-    flex-direction: column; /* метка над полем */
+    flex-direction: column;
 }
 
 .form-field label {
@@ -256,7 +255,6 @@ body{
     gap: 30px;
     align-items: flex-start;
     align-items: stretch;
-    /* box-sizing: border-box; */
 }
 
 .rules-sidebar {
@@ -277,32 +275,31 @@ body{
     margin-bottom: 20px;
 }
 
-/* список ссылок */
 .rules-sidebar h3 {
   margin-top: 0;
   margin-bottom: 12px;
 }
+
 .rules-sidebar ul {
   list-style: none;
   padding: 0;
   margin: 0;
 }
+
 .rules-sidebar li {
   margin: 8px 0;
 }
 
-/* основной контент — занимает всё оставшееся место */
 .rules-content {
-  flex: 1 1 auto;
-  min-width: 0; /* важно для корректной работы flex с overflow */
-  background: transparent;
+    flex: 1 1 auto;
+    min-width: 0;
+    background: transparent;
 }
 
 .rules-content p {
-  color: rgba(255, 255, 255, 0.75);
+    color: rgba(255, 255, 255, 0.75);
 }
 
-/* адаптив: на узких экранах — сайдбар становится сверху */
 @media (max-width: 900px) {
   .rules-page {
     flex-direction: column;
@@ -332,6 +329,7 @@ body{
 .blockContainer{
     display: flex;
 }
+
 .card{
     background: none;
     border-radius: 20px;
@@ -350,18 +348,16 @@ body{
 .rangeInfo{
     color: rgba(255, 255, 255, 0.75);;
 }
-
 /*------------------Создание комнаты------------------*/
 /*------------------Страница игры------------------*/
 .container-fluid p{
     color: white;
 }
 
-
 .sidebar {
     position: fixed;
     top: 85px;
-    left: -300px; /* скрыта за левой границей */
+    left: -300px;
     width: 300px;
     height: calc(100vh - 85px);
     background: #1f1f1f;
@@ -371,42 +367,51 @@ body{
     transition: left 0.3s ease;
     box-shadow: 4px 0 10px rgba(0,0,0,0.3);
     overflow-y: auto;
-  }
-  
-  .sidebar.open {
-    left: 0; /* появление */
-  }
-  
-  .sidebar-header {
+}
+
+.sidebar.open {
+    left: 0;
+}
+
+.sidebar-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-  }
-  
-  .sidebar-body p {
+}
+
+.sidebar-body p {
     border-bottom: 1px solid rgba(255,255,255,0.1);
     padding-bottom: 8px;
     margin-bottom: 12px;
-  }
-  .confirm-modal {
+}
+
+.confirm-modal {
     display: none;
     position: fixed;
     top: 0; left: 0;
     width: 100%; height: 100%;
     background: rgba(0,0,0,0.5);
     z-index: 2000;
-  }
-  .confirm-content {
+}
+
+.confirm-content {
     background: white;
     padding: 20px;
     border-radius: 8px;
     width: 300px;
     text-align: center;
     margin: 150px auto;
-  }
-  .bunker-card.crossed {
+}
+
+.bunker-card.crossed {
     text-decoration: line-through;
     opacity: 0.5;
-  }
-  /*------------------Страница игры------------------*/
+}
+
+.btn-xs {
+    padding: 4px 4px;
+    font-size: 14px;
+    line-height: 1;
+}
+/*------------------Страница игры------------------*/

@@ -52,7 +52,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const roomId = "{{ room.id }}";
   const username = "{{ user.username }}";
-  //const ws = new WebSocket(`ws://${window.location.host}/ws/room/${roomId}/`);
   const ws = new WebSocket(
       "ws://" + window.location.host + "/ws/room/" + roomId + "/"
   );
@@ -84,12 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
   readyBtn.addEventListener('click', () => {
     ws.send(JSON.stringify({ action: 'toggle_ready' }));
   });
-  
-  // if (startBtn) {
-  //   startBtn.addEventListener('click', () => {
-  //     ws.send(JSON.stringify({ action: 'start_game' }));
-  //   });
-  // }
 });
 </script>
 {% endblock %}

@@ -63,6 +63,21 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     "field": field
                 }
             )
+        elif data.get("type") == "exile_player":
+            user = self.scope["user"]
+            if not await self.is_host(user):
+                return
+
+            target_id = data["user_id"]
+            await self.exile_player(target_id)
+            
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "player_exiled",
+                    "user_id": target_id,
+                }
+            )
         elif data.get("type") == "swap_one":
             user = self.scope["user"]
             if not await self.is_host(user):
@@ -96,18 +111,14 @@ class RoomConsumer(AsyncWebsocketConsumer):
             field = data.get("field")
             results = await self.shuffle_field(field)
 
-            # рассылаем всем игрокам результат перемешивания
-            for user_id, field, was_open, value in results:
-                await self.channel_layer.group_send(
-                    self.group_name,
-                    {
-                        "type": "field_shuffled",
-                        "user_id": user_id,
-                        "field": field,
-                        "opened": was_open,
-                        "value": str(value)  # преобразуем в строку для простоты
-                    }
-                )
+            await self.channel_layer.group_send(
+                self.group_name,
+                {
+                    "type": "field_shuffled",
+                    "field": field,
+                    "results": results   # весь список сразу!
+                }
+            )
         elif data.get("type") == "add_random_card":
             from asgiref.sync import sync_to_async
             user = self.scope["user"]
@@ -220,7 +231,13 @@ class RoomConsumer(AsyncWebsocketConsumer):
             "user_id": event["user_id"],
             "field": event["field"]
         }))
-
+        
+    async def player_exiled(self, event):
+        await self.send(text_data=json.dumps({
+            "type": "player_exiled",
+            "user_id": event["user_id"]
+        }))
+        
     async def field_swapped(self, event):
         await self.send(text_data=json.dumps({
             "type": "field_swapped",
@@ -232,10 +249,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
     async def field_shuffled(self, event):
         await self.send(text_data=json.dumps({
             "type": "field_shuffled",
-            "user_id": event["user_id"],
             "field": event["field"],
-            "opened": event["opened"],
-            "value": str(event["value"])
+            "results": event["results"],
         }))
         
     async def card_added(self, event):
@@ -288,7 +303,18 @@ class RoomConsumer(AsyncWebsocketConsumer):
         if field not in player.opened_fields:
             player.opened_fields.append(field)
             player.save()
+            
+    @sync_to_async
+    def exile_player(self, user_id):
+        from .models import GameUser, BunkerRoom
 
+        room = BunkerRoom.objects.get(id=self.room_id)
+
+        player = GameUser.objects.get(user_id=user_id, room=room)
+        player.is_exiled = True
+        player.save()
+        return True
+            
     @sync_to_async
     def is_host(self, user):
         from .models import GameUser, BunkerRoom
@@ -308,6 +334,11 @@ class RoomConsumer(AsyncWebsocketConsumer):
         val2 = getattr(p2, field)
         setattr(p1, field, val2)
         setattr(p2, field, val1)
+        if field == "health":
+            sev1 = p1.health_severity
+            sev2 = p2.health_severity
+            p1.health_severity = sev2
+            p2.health_severity = sev1
         p1.save()
         p2.save()
 
@@ -319,40 +350,83 @@ class RoomConsumer(AsyncWebsocketConsumer):
         room = BunkerRoom.objects.get(id=self.room_id)
         players = list(GameUser.objects.filter(room=room))
 
-        opened_states = []
-        values_for_js = []
+        shufflable_players = []
         objects_to_shuffle = []
 
+        results_for_js = []
+
         for p in players:
-            opened_states.append(field in (p.opened_fields or []))
+            opened = field in (p.opened_fields or [])
+            is_exiled = p.is_exiled
             val = getattr(p, field)
 
+            if opened and not is_exiled:
+                shufflable_players.append(p)
+                if field == "health":
+                    objects_to_shuffle.append((val, p.health_severity))
+                else:
+                    objects_to_shuffle.append(val)
+
+            # формируем строку для JS
             if field == "biology":
-                # формируем строку для JS
                 if val:
                     parts = [val.gender]
                     if val.age:
-                        parts.append(f"{val.age} {age_filter(val.age)}")  # age_filter можно применить в JS
+                        parts.append(f"{val.age} {age_filter(val.age)}")
                     if val.orientation or val.childbearing:
-                        parts.append(f"({val.orientation if val.orientation else ''}{', ' if val.orientation and val.childbearing else ''}{val.childbearing if val.childbearing else ''})")
-                    values_for_js.append(" ".join(parts))
+                        parts.append(
+                            f"({val.orientation if val.orientation else ''}"
+                            f"{', ' if val.orientation and val.childbearing else ''}"
+                            f"{val.childbearing if val.childbearing else ''})"
+                        )
+                    display_value = " ".join(parts)
                 else:
-                    values_for_js.append("")
-                objects_to_shuffle.append(val)  # в БД храним объекты
+                    display_value = ""
             else:
-                values_for_js.append(val.name if val else "")
-                objects_to_shuffle.append(val)
+                display_value = val.name if val else ""
+
+            # В results_for_js добавляем только тех, кто участвует в перемешивании
+            if opened and not is_exiled:
+                results_for_js.append({
+                    "user_id": p.user.id,
+                    "field": field,
+                    "opened": True,
+                    "value": display_value
+                })
 
         # Перемешиваем объекты
         shuffled_objects = objects_to_shuffle[:]
         random.shuffle(shuffled_objects)
 
-        # Сохраняем перемешанные объекты в БД
-        for i, p in enumerate(players):
-            setattr(p, field, shuffled_objects[i])
-            p.save()
+        for i, p in enumerate(shufflable_players):
+            if field == "health":
+                # val, severity
+                health_obj, sev = shuffled_objects[i]
+                p.health = health_obj
+                p.health_severity = sev
+                setattr(p, field, health_obj)
+                p.save()
+                if p.health.severity:
+                    results_for_js[i]["value"] = f"{health_obj.name} - {sev}%"
+                else:
+                    results_for_js[i]["value"] = f"{health_obj.name}"
+            elif field == "biology":
+                # значение НЕ меняем, так как уже собрано выше
+                obj = shuffled_objects[i]
+                setattr(p, field, obj)
+                p.save()
 
-        return [(p.user.id, field, opened_states[i], values_for_js[i]) for i, p in enumerate(players)]
+                # прежнее значение уже корректно
+                # results_for_js[i]["value"] не трогаем
+
+            else:
+                obj = shuffled_objects[i]
+                setattr(p, field, obj)
+                p.save()
+
+                results_for_js[i]["value"] = obj.name if obj else ""
+
+        return results_for_js
 
     @sync_to_async
     def toggle_bunker_card(self, card_id):
@@ -371,7 +445,11 @@ class RoomConsumer(AsyncWebsocketConsumer):
         player = GameUser.objects.get(user_id=user_id, room_id=self.room_id)
 
         # удаляем характеристику
-        setattr(player, field, None)
+        if field == "health":
+            player.health = None
+            player.health_severity = None
+        else:
+            setattr(player, field, None)
 
         # !!! корректная работа с JSONField
         opened = list(player.opened_fields or [])
@@ -386,13 +464,13 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
         return {
             "value": None,
+            "severity": None if field == "health" else None,
             "opened": field in (player.opened_fields or [])
         }
 
-
     @sync_to_async
     def new_character(self, user_id, field):
-        import random
+        from random import choice
         from .models import GameUser
         from .models import Health, Biology, Hobby, Phobia, Profession, Fact, Baggage, SpecialCondition
 
@@ -417,7 +495,12 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
         # выбираем случайную характеристику
         new_value = model.objects.order_by("?").first()
-
+        if field == "health" and player.health.severity:
+            new_severity = choice([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+            player.health_severity = new_severity
+        else:
+            new_severity = player.health_severity
+            player.health_severity = new_severity
         # сохраняем
         setattr(player, field, new_value)
         player.save()
@@ -439,6 +522,15 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 parts.append("(" + ", ".join(details) + ")")
 
             value_str = " ".join(parts)
+        elif field == "health" and player.health.severity:
+            # new_value = Health.objects.order_by("?").first()
+            # new_severity = choice([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+
+            # player.health = new_value
+            # player.health_severity = new_severity
+            # player.save()
+
+            value_str = f"{new_value.name} - {new_severity}%"
 
         # CASE 2: обычные поля (profession, health, hobby, phobias)
         else:
@@ -446,135 +538,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
         return {
             "value": value_str,
-            "opened": is_opened
+            "opened": is_opened,
+            "severity": new_severity 
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    # @sync_to_async
-    # def new_character(self, user_id, field):
-    #     from .models import GameUser, Profession, Hobby, Health, Phobia, Biology, Fact
-    #     import random
-
-    #     model_map = {
-    #         "profession": Profession,
-    #         "hobby": Hobby,
-    #         "health": Health,
-    #         "fact1": Fact,
-    #         "fact2": Fact,
-    #         "phobias": Phobia,
-    #         "biology": Biology,
-    #     }
-
-    #     # если поля нет в словаре — ничего не делаем
-    #     if field not in model_map:
-    #         return None
-
-    #     player = GameUser.objects.get(user_id=user_id, room_id=self.room_id)
-
-    #     # 1. Удаляем старое
-    #     setattr(player, field, None)
-
-    #     # 2. Достаём модель
-    #     model = model_map[field]
-
-    #     # 3. Берём случайную новую запись
-    #     new_value = model.objects.order_by('?').first()
-
-    #     # 4. Сохраняем игроку
-    #     setattr(player, field, new_value)
-    #     player.save()
-
-    #     return new_value
-
-
-
-
-
-
-
-
-    # @sync_to_async
-    # def swap_one_field(self, user1_id, user2_id, field):
-    #     from .models import GameUser, BunkerRoom
-    #     room = BunkerRoom.objects.get(id=self.room_id)
-
-    #     p1 = GameUser.objects.get(user_id=user1_id, room=room)
-    #     p2 = GameUser.objects.get(user_id=user2_id, room=room)
-
-    #     # Проверяем тип поля (FK или ManyToMany)
-    #     m2m_fields = {"profession", "fact", "baggage", "special_condition"}
-        
-    #     if field in m2m_fields:
-    #         # сохраняем временные списки
-    #         p1_items = list(getattr(p1, field).all())
-    #         p2_items = list(getattr(p2, field).all())
-
-    #         # меняем местами
-    #         getattr(p1, field).set(p2_items)
-    #         getattr(p2, field).set(p1_items)
-
-    #     else:
-    #         # FK поля: health, biology, hobby, phobias
-    #         val1 = getattr(p1, field)
-    #         val2 = getattr(p2, field)
-    #         setattr(p1, field, val2)
-    #         setattr(p2, field, val1)
-    #         p1.save()
-    #         p2.save()
-
-    # @sync_to_async
-    # def shuffle_field(self, field):
-    #     from .models import GameUser, BunkerRoom
-    #     room = BunkerRoom.objects.get(id=self.room_id)
-
-    #     # Получаем всех игроков
-    #     players = list(GameUser.objects.filter(room=room))
-
-    #     # Сохраняем значения и состояния "открыто/закрыто"
-    #     values = []
-    #     opened_states = []
-    #     m2m_fields = {"profession", "fact", "baggage", "special_condition"}
-
-    #     for p in players:
-    #         opened_states.append(field in (p.opened_fields or []))
-    #         if field in m2m_fields:
-    #             values.append(list(getattr(p, field).all()))
-    #         else:
-    #             values.append(getattr(p, field))
-
-    #     # Перемешиваем значения
-    #     import random
-    #     shuffled_values = values[:]
-    #     random.shuffle(shuffled_values)
-
-    #     # Назначаем обратно
-    #     for i, p in enumerate(players):
-    #         if field in m2m_fields:
-    #             getattr(p, field).set(shuffled_values[i])
-    #         else:
-    #             setattr(p, field, shuffled_values[i])
-    #         p.save()
-
-    #     return [(p.user.id, field, opened_states[i], shuffled_values[i]) for i, p in enumerate(players)]
-

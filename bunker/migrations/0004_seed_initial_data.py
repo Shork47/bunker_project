@@ -253,7 +253,7 @@ def seed_initial_data(apps, schema_editor):
         Health(name='Лунатизм', severity='1'),
         Health(name='Мания преследования', severity='0'),
         Health(name='Мигрень', severity='1'),
-        Health(name='Не обследовался', severity='1'),
+        Health(name='Не обследовался', severity='0'),
         Health(name='Нет ноги', severity='0'),
         Health(name='Нет руки', severity='0'),
         Health(name='Повышенная волосатость', severity='1'),

@@ -11,6 +11,7 @@ import random
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import json
+from random import choice
 
 User = get_user_model()
 
@@ -76,10 +77,8 @@ def create_room(request):
             BunkerRoomBunker.objects.create(
                 room=room,
                 bunker=bunker,
-                is_crossed=False     # по умолчанию
+                is_crossed=False
             )
-        # if bunker:
-        #     room.bunker.set([bunker])
         if threat:
             room.threat.set([threat])
         
@@ -95,7 +94,6 @@ def start_game(request, room_id):
     room = get_object_or_404(BunkerRoom, id=room_id)
     players_in_room = list(GameUser.objects.filter(room_id=room.id))
 
-    # Получаем списки всех ресурсов
     all_health = list(Health.objects.all())
     all_biology = list(Biology.objects.all())
     all_hobby = list(Hobby.objects.all())
@@ -105,7 +103,6 @@ def start_game(request, room_id):
     all_baggage = list(Baggage.objects.all())
     all_special_conditions = list(SpecialCondition.objects.all())
 
-    # Перемешиваем списки
     shuffle(all_health)
     shuffle(all_biology)
     shuffle(all_hobby)
@@ -117,12 +114,15 @@ def start_game(request, room_id):
 
     for i, player in enumerate(players_in_room):
         player.health = all_health[i]
+        if all_health[i].severity:
+            player.health_severity = choice([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+        else:
+            player.health_severity = None
         player.biology = all_biology[i]
         player.hobby = all_hobby[i]
         player.phobias = all_phobias[i]
         player.profession = all_professions[i]
 
-        # Для фактов берём уникальные
         player.fact1 = all_facts.pop()
         player.fact2 = all_facts.pop()
 
@@ -131,7 +131,6 @@ def start_game(request, room_id):
 
         player.save()
 
-    # Сигнал о старте игры
     channel_layer = get_channel_layer()
     async_to_sync(channel_layer.group_send)(
         f"room_{room.id}",
@@ -143,7 +142,6 @@ def start_game(request, room_id):
 
 def game_view(request, room_id):
     room = get_object_or_404(BunkerRoom, id=room_id)
-    # Используем select_related для всех ForeignKey
     players = GameUser.objects.filter(room=room).select_related(
         'user', 'health', 'biology', 'hobby', 'phobias',
         'profession', 'fact1', 'fact2', 'baggage', 'special_condition'
@@ -161,49 +159,3 @@ def game_view(request, room_id):
             p.opened_fields = json.loads(p.opened_fields)
 
     return render(request, 'bunker/game.html', {'room': room, 'players': players, "me": me})
-
-
-
-
-
-# def start_game(request, room_id):
-#     room = get_object_or_404(BunkerRoom, id=room_id)
-#     players_in_room = GameUser.objects.filter(room_id=room.id)
-#     for player in players_in_room:
-#         player.health = Health.objects.order_by('?').first()
-#         player.biology = Biology.objects.order_by('?').first()
-#         player.hobby = Hobby.objects.order_by('?').first()
-#         player.phobias = Phobia.objects.order_by('?').first()
-#         player.save()
-
-#         # отдельные ManyToMany поля нужно добавлять после save()
-#         player.profession.add(random.choice(Profession.objects.all()))
-#         player.fact.add(random.choice(Fact.objects.all()))
-#         player.baggage.add(random.choice(Baggage.objects.all()))
-#         player.special_condition.add(random.choice(SpecialCondition.objects.all()))
-    
-#     channel_layer = get_channel_layer()
-#     async_to_sync(channel_layer.group_send)(
-#         f"room_{room.id}",
-#         {
-#             "type": "game_started",
-#         }
-#     )
-#     return redirect('game_view', room_id=room.id)
-
-# def game_view(request, room_id):
-#     room = get_object_or_404(BunkerRoom, id=room_id)
-#     #players = GameUser.objects.filter(room=room).select_related('user')
-#     players = GameUser.objects.filter(room=room).select_related('user', 'health', 'biology', 'hobby', 'phobias')\
-#                         .prefetch_related('profession', 'fact', 'baggage', 'special_condition')
-#     me = players.get(user=request.user)
-    
-#     me.opened_fields = me.opened_fields or []
-#     if isinstance(me.opened_fields, str):
-#         me.opened_fields = json.loads(me.opened_fields)
-
-#     for p in players:
-#         p.opened_fields = p.opened_fields or []
-#         if isinstance(p.opened_fields, str):
-#             p.opened_fields = json.loads(p.opened_fields)
-#     return render(request, 'bunker/game.html', {'room': room, 'players': players, "me": me})

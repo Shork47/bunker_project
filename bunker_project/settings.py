@@ -29,7 +29,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
 
-ALLOWED_HOSTS = []
+# ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["144.31.27.249", "localhost", "127.0.0.1"]
 
 
 # Application definition
@@ -77,9 +78,18 @@ TEMPLATES = [
 # WSGI_APPLICATION = 'bunker_project.wsgi.application'
 ASGI_APPLICATION = 'bunker_project.asgi.application'
 
+# CHANNEL_LAYERS = {
+#     'default': {
+#         'BACKEND': 'channels.layers.InMemoryChannelLayer',
+#     },
+# }
+
 CHANNEL_LAYERS = {
     'default': {
-        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [("127.0.0.1", 6379)],
+        },
     },
 }
 
@@ -138,7 +148,8 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 # STATICFILES_DIRS = [BASE_DIR / "static"]
-STATICFILES_DIRS = [r"C:\Users\Dmitry\Desktop\DZ2025-2026\MVC\bunker_project\bunker\static"]
+# STATICFILES_DIRS = [r"C:\Users\Dmitry\Desktop\DZ2025-2026\MVC\bunker_project\bunker\static"]
+STATICFILES_DIRS = [BASE_DIR / "bunker" / "static"]
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 

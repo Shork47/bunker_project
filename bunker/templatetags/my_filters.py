@@ -14,3 +14,12 @@ def age_filter(age):
         return 'года'
     else:
         return 'лет'
+    
+@register.filter
+def years_filter(year):
+    if year == 1:
+        return 'год'
+    elif 2 <= year <= 4:
+        return 'года'
+    else:
+        return 'лет'
