@@ -51,10 +51,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
             field = data["field"]
             user = self.scope["user"]
 
-            # сохраняем в БД открытую характеристику
             await self.open_field_in_db(user, field)
 
-            # рассылаем всем игрокам инфу
             await self.channel_layer.group_send(
                 self.group_name,
                 {
@@ -116,7 +114,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 {
                     "type": "field_shuffled",
                     "field": field,
-                    "results": results   # весь список сразу!
+                    "results": results
                 }
             )
         elif data.get("type") == "add_random_card":
@@ -125,25 +123,20 @@ class RoomConsumer(AsyncWebsocketConsumer):
             if not await self.is_host(user):
                 return
             from .models import BunkerRoom, BunkerRoomBunker
-            # Получаем комнату
             room = await sync_to_async(lambda: BunkerRoom.objects.get(id=self.room_id))()
 
-            # Существующие карты
             existing_ids = await sync_to_async(lambda: list(room.bunker.values_list('id', flat=True)))()
 
-            # Доступные карты
             from .models import Bunker
             available_cards = await sync_to_async(lambda: list(Bunker.objects.exclude(id__in=existing_ids)))()
             if not available_cards:
-                return  # все карты уже в бункере
+                return  
 
             import random
             card = random.choice(available_cards)
 
-            # Добавляем карту в ManyToMany
             card_link = await sync_to_async(lambda: BunkerRoomBunker.objects.create(room=room, bunker=card))()
         
-            # Рассылаем всем клиентам обновление
             await self.channel_layer.group_send(
                 self.group_name,
                 {
@@ -161,7 +154,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
             card_id = data["card_id"]
             result = await self.toggle_bunker_card(card_id)
             
-            # рассылаем всем игрокам
             await self.channel_layer.group_send(
                 self.group_name,
                 {
@@ -181,7 +173,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     "type": "update_character",
                     "user_id": user_id,
                     "field": field,
-                    "value": ""  # пусто = удалено
+                    "value": ""
                 }
             )
         elif data.get("type") == "new_character":
@@ -329,7 +321,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
         p1 = GameUser.objects.get(user_id=user1_id, room=room)
         p2 = GameUser.objects.get(user_id=user2_id, room=room)
 
-        # Просто меняем значения для всех FK полей
         val1 = getattr(p1, field)
         val2 = getattr(p2, field)
         setattr(p1, field, val2)
@@ -367,7 +358,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 else:
                     objects_to_shuffle.append(val)
 
-            # формируем строку для JS
             if field == "biology":
                 if val:
                     parts = [val.gender]
@@ -385,7 +375,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
             else:
                 display_value = val.name if val else ""
 
-            # В results_for_js добавляем только тех, кто участвует в перемешивании
             if opened and not is_exiled:
                 results_for_js.append({
                     "user_id": p.user.id,
@@ -394,13 +383,11 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     "value": display_value
                 })
 
-        # Перемешиваем объекты
         shuffled_objects = objects_to_shuffle[:]
         random.shuffle(shuffled_objects)
 
         for i, p in enumerate(shufflable_players):
             if field == "health":
-                # val, severity
                 health_obj, sev = shuffled_objects[i]
                 p.health = health_obj
                 p.health_severity = sev
@@ -411,13 +398,10 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 else:
                     results_for_js[i]["value"] = f"{health_obj.name}"
             elif field == "biology":
-                # значение НЕ меняем, так как уже собрано выше
                 obj = shuffled_objects[i]
                 setattr(p, field, obj)
                 p.save()
 
-                # прежнее значение уже корректно
-                # results_for_js[i]["value"] не трогаем
 
             else:
                 obj = shuffled_objects[i]
@@ -444,7 +428,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
         from .models import GameUser
         player = GameUser.objects.get(user_id=user_id, room_id=self.room_id)
 
-        # удаляем характеристику
         if field == "health":
             player.health = None
             player.health_severity = None

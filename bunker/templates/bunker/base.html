@@ -9,39 +9,38 @@
 </head>
 <body>
 
-<header>
-    <div class="header">
-        <div class="leftBlockHeader">
-            <a href="/">
-                <img class="logoIMG" src="{% static 'images/logo.png' %}" alt="Logo">
-            </a>
-            <nav>
-                <a href="/create_room">Создать комнату</a>
-                <a href="/rules">Правила</a>
-            </nav>
+<header class="py-2 shadow-sm">
+    <div class="container d-flex justify-content-between align-items-center">
+        <!-- Левая часть: Логотип + Навигация -->
+        <div class="d-flex align-items-center">
+          <a href="/" class="me-3">
+              <img src="{% static 'images/logo.png' %}" alt="Logo" class="img-fluid" style="height:60px;">
+          </a>
+          <nav class="nav">
+              <a class="nav-link px-2 text-white" href="/create_room">Создать комнату</a>
+              <a class="nav-link px-2 text-white" href="/rules">Правила</a>
+          </nav>
         </div>
-        <div class="rightBlockHeader">
-            {% if user.is_authenticated %}
-                Привет, {{ user.username }} |
-                <form method="post" action="{% url 'logout' %}" style="display:inline;">
-                    {% csrf_token %}
-                    <button type="submit">Выйти</button>
-                </form>
-            {% else %}
-                <form method="post" action="{% url 'login' %}" class="login-form">
-                    {% csrf_token %}
-                    <input type="text" name="username" placeholder="Логин" required>
-                    <input type="password" name="password" placeholder="Пароль" required>
-                    <button type="submit">Войти</button>
-                </form>
-                <div class="nav-buttons">
-                    <a href="{% url 'register' %}"><button style="margin-left: 5px;">Регистрация</button></a>
-                </div>
-            {% endif %}
+
+        <!-- Правая часть: Авторизация / Профиль -->
+        <div class="d-flex align-items-center">
+          {% if user.is_authenticated %}
+            <span class="me-2 text-white">{{ user.name }}</span>
+            <form method="post" action="{% url 'logout' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-primary btn-sm">Выйти</button>
+            </form>
+          {% else %}
+            <form method="post" action="{% url 'login' %}" class="d-flex align-items-center me-2">
+              {% csrf_token %}
+              <input type="text" name="username" placeholder="Логин" class="form-control form-control-sm me-2" required>
+              <input type="password" name="password" placeholder="Пароль" class="form-control form-control-sm me-2" required>
+              <button type="submit" class="btn btn-primary btn-sm">Войти</button>
+            </form>
+            <a href="{% url 'register' %}" class="btn btn-primary btn-sm">Регистрация</a>
+          {% endif %}
         </div>
     </div>
-
-
 </header>
 
 <main>

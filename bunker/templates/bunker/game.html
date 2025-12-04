@@ -60,7 +60,7 @@
         
         <div class="card-header text-white d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
-            {{ player.user.username }}
+            {{ player.user.name }}
             {% if player.is_exiled %}
               <span class="badge bg-danger ms-2">Изгнан</span>
             {% endif %}
@@ -142,12 +142,12 @@
 </div>
 
 <!-- Кнопка открытия -->
-<button id="openSidebar" class="btn btn-light position-fixed" style="top: 90px; left: 15px; z-index: 1100;">
+<button id="openSidebar" class="btn btn-light" style="top: 90px; left: 15px; z-index: 1100;">
   Мои карточки
 </button>
 
 <!-- Слайдбар -->
-<div id="sidebar" class="sidebar">
+<div id="sidebar" class="sidebar ">
   <div class="sidebar-header">
     <h4>Ваши карточки</h4>
     <button id="closeSidebar" class="btn-close"></button>
@@ -267,14 +267,14 @@
           <label class="mt-3">Игрок 1:</label>
           <select id="swapUser1" class="form-select">
             {% for p in players %}
-              <option value="{{ p.user.id }}">{{ p.user.username }}</option>
+              <option value="{{ p.user.id }}">{{ p.user.name }}</option>
             {% endfor %}
           </select>
   
           <label class="mt-3">Игрок 2:</label>
           <select id="swapUser2" class="form-select">
             {% for p in players %}
-              <option value="{{ p.user.id }}">{{ p.user.username }}</option>
+              <option value="{{ p.user.id }}">{{ p.user.name }}</option>
             {% endfor %}
           </select>
         </div>
@@ -292,7 +292,7 @@
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
         <div class="modal-header bg-dark">
-          <h5 class="modal-title">Удалить характеристику</h5>
+          <h5 class="modal-title">Изменение характеристики</h5>
           <button type="button" class="btn-close" onclick="hideDeleteModal()"></button>
         </div>
 
@@ -307,12 +307,13 @@
             <option value="fact1">Факт 1</option>
             <option value="fact2">Факт 2</option>
             <option value="baggage">Багаж</option>
+            <option value="special_condition">Багаж</option>
           </select>
 
           <label class="mt-3">Игрок:</label>
           <select id="deleteUser" class="form-select">
             {% for p in players %}
-              <option value="{{ p.user.id }}">{{ p.user.username }}</option>
+              <option value="{{ p.user.id }}">{{ p.user.name }}</option>
             {% endfor %}
           </select>
         </div>
