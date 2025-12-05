@@ -150,7 +150,7 @@
 <div id="sidebar" class="sidebar ">
   <div class="sidebar-header">
     <h4>Ваши карточки</h4>
-    <button id="closeSidebar" class="btn-close"></button>
+    <button id="closeSidebar" class="btn-close btn-close-white"></button>
   </div>
 
   <div class="sidebar-body">
@@ -356,6 +356,15 @@
     sidebar.classList.remove('open');
   };
 
+  document.addEventListener("DOMContentLoaded", function () {
+      const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+      tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+          new bootstrap.Tooltip(tooltipTriggerEl, {
+              trigger: 'hover focus click'
+          });
+      });
+  });
+
   document.querySelectorAll(".open-field").forEach(btn => {
       btn.onclick = () => {
           fieldToOpen = btn;
@@ -391,18 +400,54 @@
     }
   });
 
-  document.addEventListener("DOMContentLoaded", function () {
-    if (isHost) {
-        document.querySelectorAll('.bunker-card').forEach(card => {
-            card.addEventListener('click', () => {
-                const cardId = card.dataset.cardId;
-                ws.send(JSON.stringify({
-                    'type': 'toggle_bunker_card',
-                    'card_id': cardId
-                }));
-            });
-        });
-    }
+  document.addEventListener("DOMContentLoaded", () => {
+      const cards = document.querySelectorAll(".bunker-card");
+
+      document.addEventListener("click", () => {
+          document.querySelectorAll("[data-bs-toggle='tooltip']").forEach(el => {
+              const t = bootstrap.Tooltip.getInstance(el);
+              if (t) t.hide();
+          });
+      });
+
+      cards.forEach(card => {
+          let pressTimer;
+          let longPressTriggered = false;
+
+          card.addEventListener("touchstart", () => {
+              longPressTriggered = false;
+
+              pressTimer = setTimeout(() => {
+                  longPressTriggered = true;
+
+                  const tooltip = bootstrap.Tooltip.getInstance(card);
+                  if (tooltip) {
+                      tooltip.show();
+                  }
+              }, 400);
+          });
+
+          card.addEventListener("touchend", () => {
+              clearTimeout(pressTimer);
+          });
+
+          card.addEventListener("click", (event) => {
+              if (longPressTriggered) {
+                  event.stopPropagation();
+                  event.preventDefault();
+                  return;
+              }
+
+              if (isHost === "true") {
+                  const cardId = card.dataset.cardId;
+
+                  ws.send(JSON.stringify({
+                      type: "toggle_bunker_card",
+                      card_id: cardId
+                  }));
+              }
+          });
+      });
   });
   
   ws.onmessage = function(e) {
@@ -503,7 +548,7 @@
 
       container.appendChild(span);
 
-      // new bootstrap.Tooltip(span);
+      new bootstrap.Tooltip(span);
 
       if (isHost) {
         span.addEventListener('click', () => {

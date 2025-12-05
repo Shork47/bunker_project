@@ -11,7 +11,7 @@
 
 <header class="py-2 shadow-sm">
     <div class="container d-flex justify-content-between align-items-center">
-        <!-- Левая часть: Логотип + Навигация -->
+
         <div class="d-flex align-items-center">
           <a href="/" class="me-3">
               <img src="{% static 'images/logo.png' %}" alt="Logo" class="img-fluid" style="height:60px;">
@@ -22,10 +22,14 @@
           </nav>
         </div>
 
-        <!-- Правая часть: Авторизация / Профиль -->
         <div class="d-flex align-items-center">
           {% if user.is_authenticated %}
-            <span class="me-2 text-white">{{ user.name }}</span>
+            {% if user.avatar %}
+              <img src={{ user.avatar.url }} alt="Аватар" class="rounded-circle me-3 text-white" style="width:60px; height:60px; object-fit:cover;">
+            {% else %}
+              <img src="{% static 'images/avatar_placeholder.png' %}" alt="Аватар" class="rounded-circle me-3 text-white" style="width:60px; height:60px; object-fit:cover;">
+            {% endif %}
+            <a href="{% url 'user_profile' user.id %}" class="me-2 text-white text-decoration-none">{{ user.name }}</a>
             <form method="post" action="{% url 'logout' %}">
               {% csrf_token %}
               <button type="submit" class="btn btn-primary btn-sm">Выйти</button>

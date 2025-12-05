@@ -2,6 +2,9 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
+from storages.backends.s3boto3 import S3Boto3Storage
+
+avatar_storage = S3Boto3Storage()
 
 # ------------------- Пользователь -------------------
 class UserManager(BaseUserManager):
@@ -23,6 +26,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     name = models.CharField(max_length=255)
     is_admin = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
+    avatar = models.ImageField(upload_to='avatars/', blank=True, null=True, storage=avatar_storage)
     date_joined = models.DateTimeField(default=timezone.now)
 
     objects = UserManager()

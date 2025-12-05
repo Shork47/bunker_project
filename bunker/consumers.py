@@ -17,8 +17,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        user = self.scope['user']  # достаем пользователя здесь, в async
-        await self.add_player_to_db(user)  # передаем его в sync_to_async
+        user = self.scope['user']
+        await self.add_player_to_db(user)
         self.rooms.setdefault(self.room_id, []).append({"username": user.username, "ready": False})
         await self.update_room()
 
@@ -41,7 +41,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
                     break
             await self.update_room()
         elif data.get('action') == 'start_game':
-        # Отправляем всем игрокам сигнал, что игра началась
             self.started_rooms.add(self.room_id)
             await self.channel_layer.group_send(
                 self.group_name,
@@ -91,7 +90,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 field=field
             )
 
-            # отправляем всем игрокам обновление
             await self.channel_layer.group_send(
                 self.group_name,
                 {
@@ -434,14 +432,12 @@ class RoomConsumer(AsyncWebsocketConsumer):
         else:
             setattr(player, field, None)
 
-        # !!! корректная работа с JSONField
         opened = list(player.opened_fields or [])
 
-        # делаем характеристику открытой
         if field not in opened:
             opened.append(field)
 
-        player.opened_fields = opened  # <-- обязательно присваиваем обратно
+        player.opened_fields = opened
 
         player.save()
 
@@ -476,7 +472,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
         opened = list(player.opened_fields or [])
         is_opened = field in opened
 
-        # выбираем случайную характеристику
         new_value = model.objects.order_by("?").first()
         if field == "health" and player.health.severity:
             new_severity = choice([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
@@ -484,12 +479,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
         else:
             new_severity = player.health_severity
             player.health_severity = new_severity
-        # сохраняем
         setattr(player, field, new_value)
         player.save()
 
-        # ---- Формируем строку для фронта ----
-        # CASE 1: biology
         if field == "biology":
             parts = []
             if new_value.gender:
@@ -506,16 +498,8 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
             value_str = " ".join(parts)
         elif field == "health" and player.health.severity:
-            # new_value = Health.objects.order_by("?").first()
-            # new_severity = choice([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
-
-            # player.health = new_value
-            # player.health_severity = new_severity
-            # player.save()
-
             value_str = f"{new_value.name} - {new_severity}%"
 
-        # CASE 2: обычные поля (profession, health, hobby, phobias)
         else:
             value_str = new_value.name if hasattr(new_value, "name") else str(new_value)
 

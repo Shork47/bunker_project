@@ -32,10 +32,23 @@ DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
 # ALLOWED_HOSTS = []
 ALLOWED_HOSTS = ["144.31.27.249", "localhost", "127.0.0.1"]
 
+# S3
+AWS_ACCESS_KEY_ID = 'YCAJEEIFLRQFv6OmzUcKX8TPS'
+AWS_SECRET_ACCESS_KEY = 'YCOR19V-RBBr0dMxbwXJDedz8pUchqzyRXV4mHBr'
+AWS_STORAGE_BUCKET_NAME = 'bunker47'  # твой новый bucket
+AWS_S3_ENDPOINT_URL = 'https://storage.yandexcloud.net'
+AWS_S3_REGION_NAME = 'ru-central1'
+AWS_S3_OBJECT_PARAMETERS = {'CacheControl': 'max-age=86400'}
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_AUTH = False
+AWS_S3_ADDRESSING_STYLE = "path"
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+
 
 # Application definition
 
 INSTALLED_APPS = [
+    'storages',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -136,7 +149,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Yekaterinburg'
 
 USE_I18N = True
 USE_L10N = True

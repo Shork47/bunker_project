@@ -1,0 +1,9 @@
+Django>=5.2.7
+djangorestframework>=3.14.0
+psycopg2>=2.9.7
+python-dotenv>=1.0.0
+channels>=4.1.0
+channels-redis>=4.1.0
+daphne>=4.0.0
+whitenoise>=6.5.0
+django-storages[boto3]>=1.19.0

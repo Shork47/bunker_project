@@ -312,3 +312,43 @@ body{
     line-height: 1;
 }
 /*------------------Страница игры------------------*/
+.pagination .page-link {
+    background-color: #343a40; /* темно-серый фон */
+    border: 1px solid #495057;
+    color: #fff;
+}
+
+.pagination .page-link:hover {
+    background-color: #495057;
+    color: #fff;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #74abff; /* синий Bootstrap или поставь свой */
+    border-color: #74abff;
+    color: #fff;
+}
+
+.pagination .page-item.disabled .page-link {
+    background-color: #2c2f33;
+    border-color: #3a3d40;
+    color: #777;
+}
+
+.accordion-item {
+    border: none !important;
+}
+
+.accordion-header {
+    border: none !important;
+}
+
+/* У кнопки */
+.accordion-button {
+    border: none !important;
+    box-shadow: none !important;
+}
+
+.accordion-button::after {
+    display: none;
+}

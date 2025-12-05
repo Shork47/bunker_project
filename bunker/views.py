@@ -12,6 +12,8 @@ from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 import json
 from random import choice
+from django.core.paginator import Paginator
+from .decorators import login_required_toast
 
 User = get_user_model()
 
@@ -53,9 +55,11 @@ def login_view(request):
 def rules(request):
     return render(request, 'bunker/rules.html')
 
+@login_required_toast
 def create_room_page(request):
     return render(request, 'bunker/create_room.html')
 
+@login_required_toast
 def create_room(request):
     if request.method == "POST":
         room_name = request.POST.get('roomName')
@@ -85,10 +89,12 @@ def create_room(request):
         return redirect('room_view', room_id=room.id)
     return redirect('create_room_page')
 
+@login_required_toast
 def room_view(request, room_id):
     room = get_object_or_404(BunkerRoom, id=room_id)
     return render(request, 'bunker/room.html', {'room': room})
 
+@login_required_toast
 def start_game(request, room_id):
     from random import shuffle
     room = get_object_or_404(BunkerRoom, id=room_id)
@@ -138,8 +144,7 @@ def start_game(request, room_id):
     )
     return redirect('game_view', room_id=room.id)
 
-
-
+@login_required_toast
 def game_view(request, room_id):
     room = get_object_or_404(BunkerRoom, id=room_id)
     players = GameUser.objects.filter(room=room).select_related(
@@ -159,3 +164,32 @@ def game_view(request, room_id):
             p.opened_fields = json.loads(p.opened_fields)
 
     return render(request, 'bunker/game.html', {'room': room, 'players': players, "me": me})
+
+def user_profile(request, user_id):
+    profile_user = get_object_or_404(User, id=user_id)
+    
+    if request.method == 'POST':
+        if request.user.id != profile_user.id:
+            return redirect('user_profile', user_id=user_id)
+        if request.FILES.get('avatar'):
+            file = request.FILES['avatar']
+            profile_user.avatar.save(file.name, file, save=True)
+            return redirect('user_profile', user_id=user_id)
+        new_name = request.POST.get('name')
+        if new_name:
+            profile_user.name = new_name
+            profile_user.save()
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            from django.http import JsonResponse
+            return JsonResponse({'name': profile_user.name})
+    
+    games = GameUser.objects.filter(user=profile_user).select_related(
+        'room', 'health', 'biology', 'profession', 'hobby', 'phobias', 
+        'fact1', 'fact2', 'baggage', 'special_condition'
+    ).prefetch_related('room__bunker', 'room__players').order_by('-id')
+    
+    paginator = Paginator(games, 5)
+    page = request.GET.get("page")
+    page_obj = paginator.get_page(page)
+    
+    return render(request, 'bunker/user_profile.html', {'profile_user': profile_user, 'games': page_obj,})
