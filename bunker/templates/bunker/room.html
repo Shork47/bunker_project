@@ -12,7 +12,7 @@
           <h5 class="mb-0">Комната {{ room.name }}</h5>
         </div>
         <div class="card-body">
-          <p><strong>Создатель:</strong> {{ room.host.username }}</p>
+          <p><strong>Создатель:</strong> {{ room.host.name }}</p>
           <p><strong>Лет в бункере:</strong> {{ room.year }}</p>
           <p><strong>Катастрофа:</strong> {{ room.catastrophe.name }}</p>
           <p><strong>Описание:</strong> {{ room.catastrophe.description }}</p>
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', () => {
     data.players.forEach(p => {
       const li = document.createElement('li');
       li.className = 'list-group-item d-flex justify-content-between align-items-center';
-      li.innerHTML = `${p.username} ${p.ready ? '<span class="text-success">✔</span>' : ''}`;
+      li.innerHTML = `${p.name} ${p.ready ? '<span class="text-success">✔</span>' : ''}`;
       playersList.appendChild(li);
       playersCount.textContent = `${playersList.children.length} / {{ room.max_players }}`;
     });

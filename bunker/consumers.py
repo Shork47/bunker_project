@@ -6,42 +6,69 @@ from bunker.templatetags.my_filters import age_filter
 
 class RoomConsumer(AsyncWebsocketConsumer):
     
-    rooms = {}
-    started_rooms = set()
+    # rooms = {}
+    # started_rooms = set()
 
+    # async def connect(self):
+
+    #     self.room_id = self.scope['url_route']['kwargs']['room_id']
+    #     self.group_name = f'room_{self.room_id}'
+
+    #     await self.channel_layer.group_add(self.group_name, self.channel_name)
+    #     await self.accept()
+
+    #     user = self.scope['user']
+    #     await self.add_player_to_db(user)
+    #     self.rooms.setdefault(self.room_id, []).append({"username": user.username, "ready": False})
+    #     await self.update_room()
+
+    # async def disconnect(self):
+    #     if self.room_id in self.started_rooms:
+    #         return
+    #     user = self.scope['user']
+    #     if self.room_id in self.rooms:
+    #         self.rooms[self.room_id] = [p for p in self.rooms[self.room_id] if p['username'] != user.username]
+    #     await self.remove_player_from_db(user)
+    #     await self.update_room()
+    
     async def connect(self):
-
         self.room_id = self.scope['url_route']['kwargs']['room_id']
         self.group_name = f'room_{self.room_id}'
-
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
         user = self.scope['user']
         await self.add_player_to_db(user)
-        self.rooms.setdefault(self.room_id, []).append({"username": user.username, "ready": False})
+        await self.set_user_active(user, True)
         await self.update_room()
 
     async def disconnect(self, code):
-        if self.room_id in self.started_rooms:
-            return
         user = self.scope['user']
-        if self.room_id in self.rooms:
-            self.rooms[self.room_id] = [p for p in self.rooms[self.room_id] if p['username'] != user.username]
-        await self.remove_player_from_db(user)
+        # если игра ещё НЕ началась — удаляем игрока полностью
+        if not await self.room_is_started():
+            await self.remove_player_from_db(user)
+        else:
+            # если игра уже началась — только делаем его неактивным
+            await self.set_user_active(user, False)
+        await self.check_room_empty()
         await self.update_room()
 
     async def receive(self, text_data):
         data = json.loads(text_data)
-        username = self.scope['user'].username
+        # username = self.scope['user'].username
         if data.get('action') == 'toggle_ready':
-            for p in self.rooms[self.room_id]:
-                if p['username'] == username:
-                    p['ready'] = not p['ready']
-                    break
+            # for p in self.rooms[self.room_id]:
+            #     if p['username'] == username:
+            #         p['ready'] = not p['ready']
+            #         break
+            # await self.update_room()
+            user = self.scope["user"]
+
+            from .models import GameUser
+            await self.toggle_ready_in_db(user)
             await self.update_room()
         elif data.get('action') == 'start_game':
-            self.started_rooms.add(self.room_id)
+            self.mark_room_started()
             await self.channel_layer.group_send(
                 self.group_name,
                 {'type': 'game_started'}
@@ -195,12 +222,24 @@ class RoomConsumer(AsyncWebsocketConsumer):
                 }
             )
 
+    # async def update_room(self):
+    #     players = self.rooms.get(self.room_id, [])
+    #     all_ready = all(p['ready'] for p in players) if players else False
+    #     await self.channel_layer.group_send(
+    #         self.group_name,
+    #         {'type': 'room_message', 'players': players, 'all_ready': all_ready}
+    #     )
     async def update_room(self):
-        players = self.rooms.get(self.room_id, [])
-        all_ready = all(p['ready'] for p in players) if players else False
+        players = await self.get_players()
+        all_ready = all(p["ready"] for p in players) if players else False
+
         await self.channel_layer.group_send(
             self.group_name,
-            {'type': 'room_message', 'players': players, 'all_ready': all_ready}
+            {
+                "type": "room_message",
+                "players": players,
+                "all_ready": all_ready
+            }
         )
 
     async def room_message(self, event):
@@ -210,7 +249,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         }))
         
     async def game_started(self, event):
-        self.started_rooms.add(self.room_id)
+        await self.mark_room_started()
         await self.send(text_data=json.dumps({
             'game_started': True
         }))
@@ -266,6 +305,49 @@ class RoomConsumer(AsyncWebsocketConsumer):
             "value": event["value"],
             "opened": event.get("opened", False),
         }))
+    
+    @sync_to_async
+    def get_players(self):
+        from .models import GameUser
+        qs = GameUser.objects.filter(room_id=self.room_id)
+        return [
+            {
+                "name": p.user.username,
+                "ready": p.ready
+            }
+            for p in qs
+        ]   
+        
+    @sync_to_async
+    def set_user_active(self, user, value):
+        from .models import GameUser
+        GameUser.objects.filter(user=user, room_id=self.room_id).update(active=value)
+
+    @sync_to_async
+    def toggle_ready_in_db(self, user):
+        from .models import GameUser
+        obj = GameUser.objects.get(user=user, room_id=self.room_id)
+        obj.ready = not obj.ready
+        obj.save()
+        
+    @sync_to_async
+    def room_is_started(self):
+        from .models import BunkerRoom
+        room = BunkerRoom.objects.get(id=self.room_id)
+        return room.started
+
+    @sync_to_async
+    def mark_room_started(self):
+        from .models import BunkerRoom
+        BunkerRoom.objects.filter(id=self.room_id).update(started=True)
+        
+    @sync_to_async
+    def check_room_empty(self):
+        from .models import GameUser, BunkerRoom
+
+        # осталось ли хоть одно активное соединение?
+        if not GameUser.objects.filter(room_id=self.room_id, active=True).exists():
+            BunkerRoom.objects.filter(id=self.room_id).update(finished=True)
 
     @sync_to_async
     def add_player_to_db(self, user):

@@ -91,6 +91,8 @@ class BunkerRoom(models.Model):
     catastrophe = models.ForeignKey(Catastrophe, on_delete=models.SET_NULL, null=True)
     threat = models.ManyToManyField(Threat, blank=True)
     year = models.IntegerField()
+    started = models.BooleanField(default=False)
+    finished = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -167,6 +169,8 @@ class GameUser(models.Model):
     special_condition = models.ForeignKey(SpecialCondition, on_delete=models.SET_NULL, null=True, blank=True)
     opened_fields = models.JSONField(null=True, blank=True, default=list)
     is_exiled = models.BooleanField(default=False)
+    ready = models.BooleanField(default=False)
+    active = models.BooleanField(default=True)
     is_host = models.BooleanField(default=False)
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)

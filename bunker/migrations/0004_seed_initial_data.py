@@ -648,4 +648,3 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(seed_initial_data, undo_seed_data),
     ]
-

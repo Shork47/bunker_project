@@ -183,7 +183,7 @@ def user_profile(request, user_id):
             from django.http import JsonResponse
             return JsonResponse({'name': profile_user.name})
     
-    games = GameUser.objects.filter(user=profile_user).select_related(
+    games = GameUser.objects.filter(user=profile_user, room__finished=True).select_related(
         'room', 'health', 'biology', 'profession', 'hobby', 'phobias', 
         'fact1', 'fact2', 'baggage', 'special_condition'
     ).prefetch_related('room__bunker', 'room__players').order_by('-id')
