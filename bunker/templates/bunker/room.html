@@ -51,7 +51,7 @@
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const roomId = "{{ room.id }}";
-  const username = "{{ user.username }}";
+  const username = "{{ user.name }}";
   const ws = new WebSocket(
       "ws://" + window.location.host + "/ws/room/" + roomId + "/"
   );
