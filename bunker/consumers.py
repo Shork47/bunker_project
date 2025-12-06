@@ -312,7 +312,7 @@ class RoomConsumer(AsyncWebsocketConsumer):
         qs = GameUser.objects.filter(room_id=self.room_id)
         return [
             {
-                "name": p.user.username,
+                "name": p.user.name,
                 "ready": p.ready
             }
             for p in qs
