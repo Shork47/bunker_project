@@ -44,11 +44,9 @@ class RoomConsumer(AsyncWebsocketConsumer):
 
     async def disconnect(self, code):
         user = self.scope['user']
-        # если игра ещё НЕ началась — удаляем игрока полностью
         if not await self.room_is_started():
             await self.remove_player_from_db(user)
         else:
-            # если игра уже началась — только делаем его неактивным
             await self.set_user_active(user, False)
         await self.check_room_empty()
         await self.update_room()
@@ -345,7 +343,6 @@ class RoomConsumer(AsyncWebsocketConsumer):
     def check_room_empty(self):
         from .models import GameUser, BunkerRoom
 
-        # осталось ли хоть одно активное соединение?
         if not GameUser.objects.filter(room_id=self.room_id, active=True).exists():
             BunkerRoom.objects.filter(id=self.room_id).update(finished=True)
 

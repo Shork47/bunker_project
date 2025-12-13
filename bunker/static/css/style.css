@@ -245,10 +245,9 @@ body{
 }
 
 #openSidebar {
-    position: absolute; /* фиксируем относительно окна */
-    /* top: 80px;       отступ сверху от верхнего края экрана */
-    left: 15px;      /* отступ слева */
-    z-index: 1100;   /* выше всего контента */
+    position: absolute;
+    left: 15px; 
+    z-index: 1100;
 }
 
 .sidebar {
@@ -313,7 +312,7 @@ body{
 }
 /*------------------Страница игры------------------*/
 .pagination .page-link {
-    background-color: #343a40; /* темно-серый фон */
+    background-color: #343a40;
     border: 1px solid #495057;
     color: #fff;
 }
@@ -324,7 +323,7 @@ body{
 }
 
 .pagination .page-item.active .page-link {
-    background-color: #74abff; /* синий Bootstrap или поставь свой */
+    background-color: #74abff;
     border-color: #74abff;
     color: #fff;
 }
