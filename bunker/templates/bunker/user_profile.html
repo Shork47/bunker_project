@@ -48,7 +48,7 @@
                     <div class="accordion-body">
                         <p><strong>Карты бункера:</strong> 
                         {% for card in game.room.bunkerroombunker_set.all %}
-                            {{ card.bunker.name }}{% if not forloop.last %}, {% endif %}{% if card.is_crossed %} (✖){% endif %}
+                            {{ card.bunker.name }}{% if card.is_crossed %} (✖){% endif %}{% if not forloop.last %}, {% endif %}
                         {% empty %}
                             Нет карт
                         {% endfor %}
@@ -62,7 +62,7 @@
                                 {% if player.is_exiled %}<span class="badge bg-danger ms-2">Изгнан</span>{% endif %}
                                 <ul class="list-unstyled d-flex flex-wrap">
                                     <li class="col-6">💗 Здоровье: {{ player.health.name }}{% if player.health_severity %} - {{ player.health_severity }}%{% endif %}</li>
-                                    <li class="col-6">👫 Биология: {{ player.biology.gender }}{% if player.biology.age %} - {{ player.biology.age }} {{ player.biology.age|age_filter }}{% endif %}({% if player.biology.orientation %}{{ player.biology.orientation }}{% endif %}{% if player.biology.orientation and player.biology.childbearing %}, {% endif %}{% if player.biology.childbearing %}{{ player.biology.childbearing }}{% endif %})</li>
+                                    <li class="col-6">👫 Биология: {{ player.biology.gender }}{% if player.biology.age %} - {{ player.biology.age }} {{ player.biology.age|age_filter }}{% endif %} {% if player.biology.orientation or player.biology.childbearing %}({% if player.biology.orientation %}{{ player.biology.orientation }}{% endif %}{% if player.biology.orientation and player.biology.childbearing %}, {% endif %}{% if player.biology.childbearing %}{{ player.biology.childbearing }}{% endif %}){% endif %}</li>
                                     <li class="col-6">🎨 Хобби: {{ player.hobby.name }}</li>
                                     <li class="col-6">😨 Фобия: {{ player.phobias.name }}</li>
                                     <li class="col-6">👩‍⚕️ Профессия: {{ player.profession.name }}</li>
