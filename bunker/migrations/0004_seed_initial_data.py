@@ -358,7 +358,6 @@ def seed_initial_data(apps, schema_editor):
         Phobia(name='Социофобия'),
         Phobia(name='Токофобия'),
         Phobia(name='Нет фобии'),
-        
     ])
 
     # --- ФАКТЫ ---
